@@ -1,1 +1,8 @@
-
+name: Schedule Generator
+type: module
+description: 'Generates a course schedule based on student program and credits.'
+core_version_requirement: ^10 || ^11
+package: Custom
+dependencies:
+  - drupal:node
+  - drupal:paragraphs

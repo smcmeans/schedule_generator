@@ -1,1 +1,4 @@
-
+services:
+  schedule_generator.generator:
+    class: Drupal\schedule_generator\ScheduleGeneratorService
+    arguments: ['@entity_type.manager']

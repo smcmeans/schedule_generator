@@ -1,1 +1,7 @@
-
+schedule_generator.generate_form:
+  path: '/my-schedule/generate'
+  defaults:
+    _form: '\Drupal\schedule_generator\Form\GenerateScheduleForm'
+    _title: 'Generate My Schedule'
+  requirements:
+    _permission: 'access content'
