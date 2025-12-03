@@ -28,14 +28,14 @@ class ScheduleGenerator {
       // We want to get the taxonomy associated with the major, and then all the courses for that taxonomy
       $taxonomy = $term->get('field_all_classes')->referencedEntities();
       
-      foreach ($taxonomy as $class) {
+      foreach ($taxonomy as $class_entity) {
         // Add by id to avoid duplicates
         $courses[$class_entity->id()] = [
           'title' => $class_entity->getTitle(),
           'number' => $class_entity->get('field_course_number')->value,
           'credits' => $class_entity->get('field_credit_hours')->value,
           'prerequisite' => $class_entity->get('field_prerequisite')->value,
-        ]
+        ];
       }
     }
 
@@ -51,7 +51,7 @@ class ScheduleGenerator {
           'number' => $class_entity->get('field_course_number')->value,
           'credits' => $class_entity->get('field_credit_hours')->value,
           'prerequisite' => $class_entity->get('field_prerequisite')->value,
-        ]
+        ];
       }
     }
 
