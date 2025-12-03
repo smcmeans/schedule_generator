@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\schedule_generator\Service;
+namespace Drupal\schedule_generator;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
@@ -16,7 +16,7 @@ class ScheduleGeneratorService {
     $this->studentProfileManager = $studentProfileManager;
   }
 
-  public function getAllClasses(NodeInterface $studentProfile) {
+  public static function get_all_classes(NodeInterface $studentProfile) {
     $courses = [];
 
     $majors = $studentProfile->get('field_majors')->referencedEntities(); // Returns a list
