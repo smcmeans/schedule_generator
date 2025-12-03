@@ -1,7 +1,7 @@
 <?php
 
 use \Drupal\node\Entity\Node;
-use Drupal\schedule_generator\StudentGenerator;
+use Drupal\schedule_generator\ScheduleGenerator;
 
 // Hardcoded nid for testing
 $nid = 23; // John Doe's student profile node ID
@@ -15,8 +15,8 @@ if (!$node) {
 echo "Testing with Student: " . $node->label() . "\n";
 echo "------------------------------------------------\n";
 
-if (function_exists('get_all_classes')) {
-    $results = StudentGenerator::get_all_classes($node);
+if (method_exists(ScheduleGenerator::class, 'get_all_classes')) {
+    $results = ScheduleGenerator::get_all_classes($node);
     
     // Print results
     print_r($results);
