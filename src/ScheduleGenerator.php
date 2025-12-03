@@ -6,7 +6,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\Entity\Paragraph;
 
-class ScheduleGeneratorService {
+class ScheduleGenerator {
 
   protected $entityTypeManager;
   protected $studentProfileManager;
