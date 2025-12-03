@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\your_module\Service;
+namespace Drupal\schedule_generator\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
