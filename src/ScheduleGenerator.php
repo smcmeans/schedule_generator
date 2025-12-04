@@ -82,7 +82,7 @@ class ScheduleGenerator {
   // Untested
   public static function sort_courses_by_number(array $classes) {
     usort($classes, function($a, $b) {
-      return strcmp($a['number'], $b['number']);
+      return strcmp(preg_replace('[\D]', $a['number']), preg_replace('[\D]', $b['number']));
     });
     return $classes;
   }
