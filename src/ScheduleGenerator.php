@@ -88,9 +88,10 @@ class ScheduleGenerator {
   }
 
   // Tested works
-  public static function sort_classes_by_prerequisite(array $classes) {
+  public static function sort_classes_by_prerequisite(array $classes, int $desired_credits) {
     // These are the classes that have been sorted already
-    $classes_taken = [];
+    $classes_taken = [][];
+    $current_semester = 0;
 
     // Buffer to hold classes for current semester
     $buffer = [];
@@ -113,19 +114,47 @@ class ScheduleGenerator {
     // At this point, we have added all classes without prerequisites
     // Now we loop until all classes are sorted
     $made_changes = true;
-    while (!empty($classes) && $made_changes) {
-      // Reset change flag
-      $made_changes = false;
-      foreach ($classes as $id => $course) {
-        // Check if prerequisites are met
-        if (self::check_prerequisites($course['prerequisite'], array_column($classes_taken, 'number'))) {
-          // Prerequisites met, can take this class now
-          $classes_taken[] = $course;
-          // Remove from original list
-          unset($classes[$id]);
-          // Mark that we made changes this pass
-          $made_changes = true;
+    while (!empty($classes)) {
+      while ($made_changes) {
+        // Reset change flag
+        $made_changes = false;
+        foreach ($classes as $id => $course) {
+          if (self::get_total_credits($buffer) + $course['credits'] >= $desired_credits) {
+            // Not enough room in this semester, move to next course
+          }
+          // Check if prerequisites are met
+          elseif (self::check_prerequisites($course['prerequisite'], get_all_classes_number($classes_taken))) {
+            // Prerequisites met, can take this class now
+            $buffer[] = $course;
+            // Remove from original list
+            unset($classes[$id]);
+            // Mark that we made changes this pass
+            $made_changes = true;
+            // If we have reached desired credits (mostly), finalize this semester
+            if (self::get_total_credits($buffer) - $desired_credits <= 0) {
+              // Add buffer to classes taken
+              foreach ($buffer as $c) {
+                $classes_taken[$current_semester][] = $c;
+              }
+              $current_semester++;
+              // Clear buffer for next semester
+              $buffer = [];
+            }
+          }
         }
+      }
+      // If we exit the inner loop without changes, finalize any remaining buffer
+      if (!empty($buffer)) {
+        // Add buffer to classes taken
+        foreach ($buffer as $c) {
+          $classes_taken[$current_semester][] = $c;
+        }
+        $current_semester++;
+        // Clear buffer for next semester
+        $buffer = [];
+      } else {
+        // TODO: Get starter classes, like basic MTH classes, to break impossible prerequisites
+        break; // No more changes can be made, impossible prerequisites
       }
     }
 
@@ -139,6 +168,23 @@ class ScheduleGenerator {
     
       return array_values($classes_taken);
     }
+  }
+
+  private static function get_all_classes_number(array $schedules) {
+    $all_courses_number = [];
+    foreach ($schedules as $semester_schedule) {
+      foreach ($semester_schedule as $course) {
+        $all_courses_number[] = $course['number'];
+    }
+    return $all_courses_number;
+  }
+
+  private static function get_total_credits(array $courses) {
+    $total = 0;
+    foreach ($courses as $course) {
+      $total += (int) $course['credits'];
+    }
+    return $total;
   }
 
   /**
