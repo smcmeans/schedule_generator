@@ -22,7 +22,7 @@ if (method_exists(ScheduleGenerator::class, 'get_all_classes')) {
     print_r($results);
     // Additionally, test sorting by prerequisites
     if (method_exists(ScheduleGenerator::class, 'sort_classes_by_prerequisite')) {
-        $sorted_results = ScheduleGenerator::sort_classes_by_prerequisite($results);
+        $sorted_results = ScheduleGenerator::sort_classes_by_prerequisite($results, ScheduleGenerator::get_desired_credit_hours($node));
         echo "------------------------------------------------\n";
         echo "Sorted Results by Course Prerequisite:\n";
         print_r($sorted_results);
