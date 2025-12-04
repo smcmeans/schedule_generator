@@ -46,6 +46,19 @@ class ScheduleGenerator {
                   'credits' => $course->get('field_credit_hours')->value,
                   'prerequisite' => $course->get('field_prerequisite')->value,
                 ];
+
+                // Add labs/recitations if they exist
+                if ($course->hasField('field_linked_sections') && !$course->get('field_linked_sections')->isEmpty()) {
+                  $linked_sections = $course->get('field_linked_sections')->referencedEntities();
+                  foreach ($linked_sections as $section) {
+                    $courses[$section->id()] = [
+                      'title' => $section->label(),
+                      'number' => $section->get('field_course_number')->value,
+                      'credits' => $section->get('field_credit_hours')->value,
+                      'prerequisite' => $section->get('field_prerequisite')->value,
+                    ];
+                  }
+                }
               }
             }
           }
