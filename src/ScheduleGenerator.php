@@ -53,6 +53,7 @@ class ScheduleGenerator {
       }
     }
 
-
+    // Return unique courses as a numerically indexed array
+    return array_values($courses);
   }
 }
