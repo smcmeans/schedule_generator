@@ -113,6 +113,7 @@ class ScheduleGenerator {
       }
     
       return array_values($classes_taken);
+    }
   }
 
   /**
@@ -176,5 +177,5 @@ function check_prerequisites($prereq_string, array $taken_classes) {
         error_log('Prerequisite Parse Error: ' . $t->getMessage());
         return false;
     }
-}
+  }
 }
