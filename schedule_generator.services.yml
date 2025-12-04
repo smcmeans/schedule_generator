@@ -1,10 +1,8 @@
 services:
-  schedule_generator.generator:
-    class: Drupal\schedule_generator\ScheduleGeneratorService
-    arguments: ['@entity_type.manager']
   schedule_generator.student_manager:
-    # Path to your class
     class: Drupal\schedule_generator\Service\StudentProfileManager
-    # Arguments correspond to the __construct() method.
-    # The '@' symbol means "Inject this other service".
     arguments: ['@current_user', '@entity_type.manager']
+
+  schedule_generator.generator:
+    class: Drupal\schedule_generator\ScheduleGenerator
+    arguments: ['@entity_type.manager', '@schedule_generator.student_manager']
