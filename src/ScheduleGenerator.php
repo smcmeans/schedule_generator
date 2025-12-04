@@ -27,7 +27,7 @@ class ScheduleGenerator {
       // This loops through each major
       // We want to get the taxonomy associated with the major, and then all the courses for that taxonomy
       $taxonomy = $term->get('field_all_classes')->referencedEntities();
-      $classes = $taxonomy->referencedEntities();
+      $classes = $taxonomy->value->referencedEntities();
       foreach ($classes as $class_entity) {
         // Add by id to avoid duplicates
         $courses[$class_entity->id()] = [
@@ -44,7 +44,7 @@ class ScheduleGenerator {
       // This loops through each minor
       // We want to get the taxonomy associated with the minor, and then all the courses for that taxonomy
       $taxonomy = $term->get('field_all_classes')->referencedEntities();
-      $classes = $taxonomy->referencedEntities();
+      $classes = $taxonomy->value->referencedEntities();
       foreach ($classes as $class_entity) {
         // Add by id to avoid duplicates
         $courses[$class_entity->id()] = [
@@ -56,7 +56,6 @@ class ScheduleGenerator {
       }
     }
 
-    echo "DEBUG: Total unique courses collected: " . count($courses) . "\n";
     return array_values($courses);
   }
 
