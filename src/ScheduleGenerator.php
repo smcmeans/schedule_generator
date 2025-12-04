@@ -183,6 +183,8 @@ class ScheduleGenerator {
     } catch (\Throwable $t) {
         // If the string was malformed and caused a parse error
         error_log('Prerequisite Parse Error: ' . $t->getMessage());
+        error_log('Offending String: ' . $final_math);
+        error_log('Original Prerequisite: ' . $prereq_string);
         return false;
     }
   }
