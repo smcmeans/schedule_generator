@@ -99,17 +99,17 @@ class ScheduleGenerator {
     // Sort classes to better match levels (1000s, 2000s, etc.)
     $classes = self::sort_courses_by_number($classes);
 
-    for ($i = 0, $n = count($classes); $i < $n; $i++) {
-      if ($classes[$i]['prerequisite'] == 'N/A') {
-        // No prerequisite, can take this class now
-        $classes_taken[] = $classes[$i];
-        // Remove from original list
-        array_splice($classes, $i, 1);
-        // Adjust counters
-        $i--;
-        $n--;
-      }
-    }
+    // for ($i = 0, $n = count($classes); $i < $n; $i++) {
+    //   if ($classes[$i]['prerequisite'] == 'N/A') {
+    //     // No prerequisite, can take this class now
+    //     $classes_taken[] = $classes[$i];
+    //     // Remove from original list
+    //     array_splice($classes, $i, 1);
+    //     // Adjust counters
+    //     $i--;
+    //     $n--;
+    //   }
+    // }
 
     // At this point, we have added all classes without prerequisites
     // Now we loop until all classes are sorted
