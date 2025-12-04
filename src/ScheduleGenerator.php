@@ -90,7 +90,7 @@ class ScheduleGenerator {
   // Tested works
   public static function sort_classes_by_prerequisite(array $classes, int $desired_credits) {
     // These are the classes that have been sorted already
-    $classes_taken = [][];
+    $classes_taken = [];
     $current_semester = 0;
 
     // Buffer to hold classes for current semester
