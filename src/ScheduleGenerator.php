@@ -22,41 +22,37 @@ class ScheduleGenerator {
     $majors = $studentProfile->get('field_majors')->referencedEntities();
     $minors = $studentProfile->get('field_minors')->referencedEntities();
 
-    // Process majors
-    foreach ($majors as $term) {
-      // This loops through each major
-      // We want to get the taxonomy associated with the major, and then all the courses for that taxonomy
-      $taxonomy = $term->get('field_all_classes')->referencedEntities();
-      $classes = $taxonomy->value->referencedEntities();
-      foreach ($classes as $class_entity) {
-        // Add by id to avoid duplicates
-        $courses[$class_entity->id()] = [
-          'title' => $class_entity->getTitle(),
-          'number' => $class_entity->get('field_course_number')->value,
-          'credits' => $class_entity->get('field_credit_hours')->value,
-          'prerequisite' => $class_entity->get('field_prerequisite')->value,
-        ];
-      }
-    }
+    $programs = array_merge($majors, $minors);
     
+    foreach ($programs as $program) {
+      if ($program->hasField('field_requirement_groups')) {
+        // Find outer paragraph of each major
+        $requirement_groups = $program->get('field_requirement_groups')->referencedEntities();
+        foreach ($requirement_groups as $options) {
+          // Outer paragraph loop
 
-    foreach ($minors as $term) {
-      // This loops through each minor
-      // We want to get the taxonomy associated with the minor, and then all the courses for that taxonomy
-      $taxonomy = $term->get('field_all_classes')->referencedEntities();
-      $classes = $taxonomy->value->referencedEntities();
-      foreach ($classes as $class_entity) {
-        // Add by id to avoid duplicates
-        $courses[$class_entity->id()] = [
-          'title' => $class_entity->getTitle(),
-          'number' => $class_entity->get('field_course_number')->value,
-          'credits' => $class_entity->get('field_credit_hours')->value,
-          'prerequisite' => $class_entity->get('field_prerequisite')->value,
-        ];
+          // Find inner paragraphs of each requirement group
+          $requirement_options = $options->get('field_requirement_options')->referencedEntities();
+          foreach ($requirement_options as $option) {
+            // Inner paragraph loop
+
+            // Get courses from each option
+            if ($option->hasField('field_option_courses')) {
+              $course_entities = $option->get('field_option_courses')->referencedEntities();
+              foreach ($course_entities as $course) {
+                $courses[$course->id()] = [
+                  'title' => $course->label(),
+                  'number' => $course->get('field_course_number')->value,
+                  'credits' => $course->get('field_credit_hours')->value,
+                  'prerequisite' => $course->get('field_prerequisite')->value,
+                ];
+              }
+            }
+          }
+        }
       }
     }
 
-    return array_values($courses);
-  }
 
+  }
 }
