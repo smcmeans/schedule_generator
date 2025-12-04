@@ -175,6 +175,7 @@ class ScheduleGenerator {
     foreach ($schedules as $semester_schedule) {
       foreach ($semester_schedule as $course) {
         $all_courses_number[] = $course['number'];
+      }
     }
     return $all_courses_number;
   }
