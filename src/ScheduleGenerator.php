@@ -90,10 +90,13 @@ class ScheduleGenerator {
   // Tested works
   public static function sort_classes_by_prerequisite(array $classes) {
     // These are the classes that have been sorted already
-    $classes_taken = self::sort_courses_by_number($classes);
+    $classes_taken = [];
 
     // Buffer to hold classes for current semester
     $buffer = [];
+
+    // Sort classes to better match levels (1000s, 2000s, etc.)
+    $classes = self::sort_courses_by_number($classes);
 
     for ($i = 0, $n = count($classes); $i < $n; $i++) {
       if ($classes[$i]['prerequisite'] == 'N/A') {
