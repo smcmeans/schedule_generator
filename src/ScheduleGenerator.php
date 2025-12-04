@@ -172,6 +172,10 @@ class ScheduleGenerator {
 
   private static function get_all_classes_number(array $schedules) {
     $all_courses_number = [];
+    // Schedules should be a 2D array, but if no data has been added yet, just return empty
+    if (empty($schedules)) {
+      return $all_courses_number;
+    }
     foreach ($schedules as $semester_schedule) {
       foreach ($semester_schedule as $course) {
         $all_courses_number[] = $course['number'];
