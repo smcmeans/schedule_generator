@@ -119,7 +119,7 @@ class ScheduleGenerator {
         // Reset change flag
         $made_changes = false;
         foreach ($classes as $id => $course) {
-          if (self::get_total_credits($buffer) + $course['credits'] >= $desired_credits) {
+          if (self::get_total_credits($buffer) + $course['credits'] > $desired_credits) {
             // Not enough room in this semester, move to next course
           }
           // Check if prerequisites are met
@@ -131,7 +131,7 @@ class ScheduleGenerator {
             // Mark that we made changes this pass
             $made_changes = true;
             // If we have reached desired credits (mostly), finalize this semester
-            if (self::get_total_credits($buffer) - $desired_credits <= 0) {
+            if ($desired_credits - self::get_total_credits($buffer) <= 1) {
               // Add buffer to classes taken
               foreach ($buffer as $c) {
                 $classes_taken[$current_semester][] = $c;
