@@ -16,6 +16,70 @@ class ScheduleGenerator {
     $this->studentProfileManager = $studentProfileManager;
   }
 
+  /**
+* Checks if a user has met the prerequisites based on a complex string.
+*
+* @param string $prereq_string 
+* The raw string (e.g., "(CS 1010 ... and CS 1020 ...)")
+* @param array $taken_classes 
+* An array of strings of classes taken (e.g., ['CS 1010', 'ENG 1100'])
+* @return bool
+* True if requirements are met, False otherwise.
+*/
+function check_prerequisites($prereq_string, array $taken_classes) {
+    // No prerequisites
+    if (empty(trim($prereq_string))) {
+        return true;
+    }
+
+    // Normalize the taken classes array to uppercase/trimmed to ensure matching works
+    // keys are not needed, just values.
+    $taken_classes = array_map(function($c) {
+        return strtoupper(trim($c));
+    }, $taken_classes);
+
+    // Pre-formatting: Convert logic words to PHP operators
+    // We use \b (word boundaries) to ensure we don't replace parts of words
+    $logic_string = preg_replace('/\band\b/i', '&&', $prereq_string);
+    $logic_string = preg_replace('/\bor\b/i', '||', $logic_string);
+
+    // Find Courses and replace them with 1 (True) or 0 (False)
+    // Regex Pattern explanation:
+    // [A-Z]{2,5}  -> Matches 2 to 5 uppercase letters (e.g., "CS", "EGR")
+    // \s+         -> Matches one or more spaces
+    // \d{3,5}     -> Matches 3 to 5 digits (e.g., "3100")
+    $evaluated_string = preg_replace_callback(
+        '/([A-Z]{2,5}\s+\d{3,5})/', 
+        function($matches) use ($taken_classes) {
+            $course_found = trim($matches[1]);
+            
+            // Check if this specific course exists in our taken array
+            if (in_array($course_found, $taken_classes)) {
+                return '1'; // True
+            } else {
+                return '0'; // False
+            }
+        }, 
+        strtoupper($logic_string) // Pass uppercase string to match our uppercase array
+    );
+
+    // Remove EVERYTHING that is not logic or math.
+    // This strips out "Undergraduate level", "Minimum Grade of C", etc.
+    // We only keep: 1, 0, &, |, (, ), and spaces.
+    $final_math = preg_replace('/[^01&|() ]/', '', $evaluated_string);
+
+    // Safe Evaluation
+    // Example final string: "(1 && (0 || 1))"
+    try {
+        return (bool) eval("return ($final_math);");
+    } catch (\Throwable $t) {
+        // If the string was malformed and caused a parse error
+        error_log('Prerequisite Parse Error: ' . $t->getMessage());
+        return false;
+    }
+  }
+
+
   public static function get_all_classes(NodeInterface $studentProfile) {
     $courses = [];
 
@@ -116,66 +180,4 @@ class ScheduleGenerator {
     }
   }
 
-  /**
- * Checks if a user has met the prerequisites based on a complex string.
- *
- * @param string $prereq_string 
- * The raw string (e.g., "(CS 1010 ... and CS 1020 ...)")
- * @param array $taken_classes 
- * An array of strings of classes taken (e.g., ['CS 1010', 'ENG 1100'])
- * @return bool
- * True if requirements are met, False otherwise.
- */
-function check_prerequisites($prereq_string, array $taken_classes) {
-    // No prerequisites
-    if (empty(trim($prereq_string))) {
-        return true;
-    }
-
-    // Normalize the taken classes array to uppercase/trimmed to ensure matching works
-    // keys are not needed, just values.
-    $taken_classes = array_map(function($c) {
-        return strtoupper(trim($c));
-    }, $taken_classes);
-
-    // Pre-formatting: Convert logic words to PHP operators
-    // We use \b (word boundaries) to ensure we don't replace parts of words
-    $logic_string = preg_replace('/\band\b/i', '&&', $prereq_string);
-    $logic_string = preg_replace('/\bor\b/i', '||', $logic_string);
-
-    // Find Courses and replace them with 1 (True) or 0 (False)
-    // Regex Pattern explanation:
-    // [A-Z]{2,5}  -> Matches 2 to 5 uppercase letters (e.g., "CS", "EGR")
-    // \s+         -> Matches one or more spaces
-    // \d{3,5}     -> Matches 3 to 5 digits (e.g., "3100")
-    $evaluated_string = preg_replace_callback(
-        '/([A-Z]{2,5}\s+\d{3,5})/', 
-        function($matches) use ($taken_classes) {
-            $course_found = trim($matches[1]);
-            
-            // Check if this specific course exists in our taken array
-            if (in_array($course_found, $taken_classes)) {
-                return '1'; // True
-            } else {
-                return '0'; // False
-            }
-        }, 
-        strtoupper($logic_string) // Pass uppercase string to match our uppercase array
-    );
-
-    // Remove EVERYTHING that is not logic or math.
-    // This strips out "Undergraduate level", "Minimum Grade of C", etc.
-    // We only keep: 1, 0, &, |, (, ), and spaces.
-    $final_math = preg_replace('/[^01&|() ]/', '', $evaluated_string);
-
-    // Safe Evaluation
-    // Example final string: "(1 && (0 || 1))"
-    try {
-        return (bool) eval("return ($final_math);");
-    } catch (\Throwable $t) {
-        // If the string was malformed and caused a parse error
-        error_log('Prerequisite Parse Error: ' . $t->getMessage());
-        return false;
-    }
-  }
 }
