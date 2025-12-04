@@ -94,6 +94,8 @@ class ScheduleGenerator {
     // Now we loop until all classes are sorted
     $made_changes = true;
     while (!empty($classes) && $made_changes) {
+      // Reset change flag
+      $made_changes = false;
       foreach ($classes as $id => $course) {
         // Check if prerequisites are met
         if (self::check_prerequisites($course['prerequisite'], array_column($classes_taken, 'number'))) {
@@ -130,7 +132,7 @@ class ScheduleGenerator {
   */
   public static function check_prerequisites($prereq_string, array $taken_classes) {
     // No prerequisites
-    if (empty(trim($prereq_string))) {
+    if (empty(trim($prereq_string)) || $prereq_string === 'N/A') {
         return true;
     }
 
@@ -169,6 +171,10 @@ class ScheduleGenerator {
     // This strips out "Undergraduate level", "Minimum Grade of C", etc.
     // We only keep: 1, 0, &, |, (, ), and spaces.
     $final_math = preg_replace('/[^01&|() ]/', '', $evaluated_string);
+
+    while (strpos($final_math, '()') !== false) {
+        $final_math = str_replace('()', '', $final_math);
+    }
 
     // Safe Evaluation
     // Example final string: "(1 && (0 || 1))"
