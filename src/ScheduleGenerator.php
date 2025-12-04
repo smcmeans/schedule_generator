@@ -90,7 +90,7 @@ class ScheduleGenerator {
   // Tested works
   public static function sort_classes_by_prerequisite(array $classes) {
     // These are the classes that have been sorted already
-    $classes_taken = sort_courses_by_number($classes);
+    $classes_taken = self::sort_courses_by_number($classes);
 
     // Buffer to hold classes for current semester
     $buffer = [];
