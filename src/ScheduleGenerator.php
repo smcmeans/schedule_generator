@@ -16,8 +16,13 @@ class ScheduleGenerator {
     $this->studentProfileManager = $studentProfileManager;
   }
 
+  // Untested
+  public static function get_desired_credit_hours(NodeInterface $studentProfile) {
+    $credit_hours = $studentProfile->get('field_desired_credit_hours')->value;
+    return is_numeric($credit_hours) ? (int) $credit_hours : 12; // Default to 12 if not set
+  }
 
-
+  // Tested works
   public static function get_all_classes(NodeInterface $studentProfile) {
     $courses = [];
 
@@ -74,9 +79,21 @@ class ScheduleGenerator {
     return array_values($courses);
   }
 
+  // Untested
+  public static function sort_courses_by_number(array $classes) {
+    usort($classes, function($a, $b) {
+      return strcmp($a['number'], $b['number']);
+    });
+    return $classes;
+  }
+
+  // Tested works
   public static function sort_classes_by_prerequisite(array $classes) {
     // These are the classes that have been sorted already
-    $classes_taken = [];
+    $classes_taken = sort_courses_by_number($classes);
+
+    // Buffer to hold classes for current semester
+    $buffer = [];
 
     for ($i = 0, $n = count($classes); $i < $n; $i++) {
       if ($classes[$i]['prerequisite'] == 'N/A') {
@@ -114,6 +131,7 @@ class ScheduleGenerator {
       // Just append them at the end for now
       foreach ($classes as $course) {
         $classes_taken[] = $course;
+        error_log('Unresolvable Prerequisite for Course: ' . $course['number'] . ' - ' . $course['title'] . ' | Prerequisite: ' . $course['prerequisite']);
       }
     
       return array_values($classes_taken);
@@ -176,6 +194,7 @@ class ScheduleGenerator {
     // We only keep: 1, 0, &, |, (, ), and spaces.
     $final_math = preg_replace('/[^01&|() ]/', '', $evaluated_string);
 
+    // Might be unnecessary, but remove any empty parentheses that could cause eval errors
     while (strpos($final_math, '()') !== false) {
         $final_math = str_replace('()', '', $final_math);
     }
