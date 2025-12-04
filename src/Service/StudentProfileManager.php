@@ -24,6 +24,9 @@ class StudentProfileManager {
     * Returns the Student Profile Node for the current user.
     */
     public function getStudentProfileNode() {
+        // TEMP TEST - RETURN NULL
+        return NULL;
+
         // If we already looked this up, return the saved result immediately.
         if ($this->profileChecked) {
             return $this->loadedProfile;
