@@ -138,7 +138,7 @@ class ScheduleGenerator {
 
     // Remove informational notes like "(MTH 2310 can be taken concurrently)"
     // This removes any set of parentheses containing the word "concurrently"
-    $prereq_string = preg_replace('/\([^)]*concurrently[^)]*\)/i', '', $prereq_string);
+    $logic_string = preg_replace('/\([^)]*concurrently[^)]*\)/i', '', $prereq_string);
 
     // Normalize the taken classes array to uppercase/trimmed to ensure matching works
     // keys are not needed, just values.
@@ -148,7 +148,7 @@ class ScheduleGenerator {
 
     // Pre-formatting: Convert logic words to PHP operators
     // We use \b (word boundaries) to ensure we don't replace parts of words
-    $logic_string = preg_replace('/\band\b/i', '&&', $prereq_string);
+    $logic_string = preg_replace('/\band\b/i', '&&', $logic_string);
     $logic_string = preg_replace('/\bor\b/i', '||', $logic_string);
 
     // Find Courses and replace them with 1 (True) or 0 (False)
