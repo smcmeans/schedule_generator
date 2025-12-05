@@ -144,6 +144,7 @@ class ScheduleGenerator {
               }
             } else {
               error_log(print_r(self::get_all_classes_number($classes_taken), TRUE));
+              error_log($course['prerequisite']);
             }
             // If we have reached desired credits (mostly), finalize this semester
             if ($desired_credits - self::get_total_credits($buffer) <= 1) {
