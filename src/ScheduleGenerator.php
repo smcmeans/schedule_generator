@@ -52,21 +52,22 @@ class ScheduleGenerator {
                   'number' => $course->get('field_course_number')->value,
                   'credits' => $course->get('field_credit_hours')->value,
                   'prerequisite' => $course->get('field_prerequisite')->value,
+                  'linked_sections' => $course->hasField('field_linked_sections') ? $course->get('field_linked_sections')->referencedEntities() : [];
                 ];
 
-                // Add labs/recitations if they exist
-                // Might want to move this to the final schedule generation command to ensure linked sections are not split
-                // across semesters
-                if ($course->hasField('field_linked_sections') && !$course->get('field_linked_sections')->isEmpty()) {
-                  $linked_sections = $course->get('field_linked_sections')->referencedEntities();
-                  foreach ($linked_sections as $section) {
-                    $courses[$section->id()] = [
-                      'title' => $section->label(),
-                      'number' => $section->get('field_course_number')->value,
-                      'credits' => $section->get('field_credit_hours')->value,
-                      'prerequisite' => $section->get('field_prerequisite')->value,
-                    ];
-                  }
+                // // Add labs/recitations if they exist
+                // // Might want to move this to the final schedule generation command to ensure linked sections are not split
+                // // across semesters
+                // if ($course->hasField('field_linked_sections') && !$course->get('field_linked_sections')->isEmpty()) {
+                //   $linked_sections = $course->get('field_linked_sections')->referencedEntities();
+                //   foreach ($linked_sections as $section) {
+                //     $courses[$section->id()] = [
+                //       'title' => $section->label(),
+                //       'number' => $section->get('field_course_number')->value,
+                //       'credits' => $section->get('field_credit_hours')->value,
+                //       'prerequisite' => $section->get('field_prerequisite')->value,
+                //     ];
+                // }
                 }
               }
             }
@@ -130,6 +131,19 @@ class ScheduleGenerator {
             unset($classes[$id]);
             // Mark that we made changes this pass
             $made_changes = true;
+            // Add linked courses if they exist
+            if (!empty($course['linked_sections'])) {
+              foreach ($course['linked_sections'] as $linked_course) {
+                $linked_course_data = [
+                  'title' => $linked_course->label(),
+                  'number' => $linked_course->get('field_course_number')->value,
+                  'credits' => $linked_course->get('field_credit_hours')->value,
+                  'prerequisite' => $linked_course->get('field_prerequisite')->value
+                ];
+                $buffer[] = $linked_course_data;
+              }
+            }
+
             // If we have reached desired credits (mostly), finalize this semester
             if ($desired_credits - self::get_total_credits($buffer) <= 1) {
               // Add buffer to classes taken
@@ -181,6 +195,8 @@ class ScheduleGenerator {
         $all_courses_number[] = $course['number'];
       }
     }
+    // Test print
+    echo $all_courses_number;
     return $all_courses_number;
   }
 
