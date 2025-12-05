@@ -67,8 +67,8 @@ class ScheduleGenerator {
                 //       'credits' => $section->get('field_credit_hours')->value,
                 //       'prerequisite' => $section->get('field_prerequisite')->value,
                 //     ];
+                //   }
                 // }
-                }
               }
             }
           }
