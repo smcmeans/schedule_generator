@@ -124,7 +124,7 @@ class ScheduleGenerator {
             // Not enough room in this semester, move to next course
           }
           // Check if prerequisites are met
-          elseif (self::check_prerequisites($course), self::get_all_classes_number($classes_taken)) {
+          elseif (self::check_prerequisites($course, self::get_all_classes_number($classes_taken))) {
             // Prerequisites met, can take this class now
             $buffer[] = $course;
             // Remove from original list
