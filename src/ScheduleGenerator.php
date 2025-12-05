@@ -124,7 +124,7 @@ class ScheduleGenerator {
             // Not enough room in this semester, move to next course
           }
           // Check if prerequisites are met
-          elseif (self::check_prerequisites($course['prerequisite'], self::get_all_classes_number($classes_taken))) {
+          elseif (self::check_prerequisites($course['prerequisite'], self::get_all_classes_number($classes_taken)['numbers'])) {
             // Prerequisites met, can take this class now
             $buffer[] = $course;
             // Remove from original list
@@ -192,11 +192,9 @@ class ScheduleGenerator {
     }
     foreach ($schedules as $semester_schedule) {
       foreach ($semester_schedule as $course) {
-        $all_courses_number[] = $course['number'];
+        $all_courses_number[] = $course;
       }
     }
-    // Test print
-    echo $all_courses_number;
     return $all_courses_number;
   }
 
