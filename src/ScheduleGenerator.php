@@ -124,7 +124,6 @@ class ScheduleGenerator {
             // Not enough room in this semester, move to next course
           }
           // Check if prerequisites are met
-          error_log(print_r(self::get_all_classes_number($classes_taken), TRUE));
           elseif (self::check_prerequisites($course['prerequisite'], self::get_all_classes_number($classes_taken))) {
             // Prerequisites met, can take this class now
             $buffer[] = $course;
@@ -143,8 +142,9 @@ class ScheduleGenerator {
                 ];
                 $buffer[] = $linked_course_data;
               }
+            } else {
+              error_log(print_r(self::get_all_classes_number($classes_taken), TRUE));
             }
-
             // If we have reached desired credits (mostly), finalize this semester
             if ($desired_credits - self::get_total_credits($buffer) <= 1) {
               // Add buffer to classes taken
