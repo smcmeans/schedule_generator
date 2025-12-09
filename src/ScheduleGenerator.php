@@ -251,85 +251,70 @@ class ScheduleGenerator {
   * True if requirements are met, False otherwise.
   */
   public static function check_prerequisites($prereq_string, array $taken_classes) {
-    if (empty($prereq_string) || $prereq_string === 'N/A') {
-      return true;
-    }
-
-    // Convert ' and ' to ' && ', ' or ' to ' || ' (case insensitive)
-    $logic_string = str_ireplace([' and ', ' or '], [' && ', ' || '], $prereq_string);
-
-    // Remove phrases that don't help identify the course.
-    $noise_phrases = [
-      'Undergraduate level',
-      'Minimum Grade of D',
-      'Minimum Grade of C',
-      'Minimum Grade of P',
-      'can be taken concurrently',
-      '(', // Temporarily remove parens inside specific course notes if needed, 
-           // but usually better to rely on logic structure.
-    ];
-    
-    // We don't remove '(', ')' generally, only specific noise. 
-    // Actually, simple string replacement for noise works best
-    $clean_string = $logic_string;
-    foreach ($noise_phrases as $phrase) {
-        $clean_string = str_ireplace($phrase, '', $clean_string);
-    }
-
-    // Extract Tokens (The requirements) using Regex
-    // Look for logic operators to split the string, preserving delimiters.
-    // The pattern splits by (, ), &&, ||
-    $tokens = preg_split('/(\(|\)|&&|\|\|)/', $clean_string, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-
-    $eval_string = "";
-
-    foreach ($tokens as $token) {
-      $trim_token = trim($token);
-
-      // If it's a logic operator, keep it as is
-      if (in_array($trim_token, ['(', ')', '&&', '||'])) {
-        $eval_string .= " $trim_token ";
-        continue;
-      }
-
-      // If it's whitespace only, skip
-      if (empty($trim_token)) {
-        continue;
-      }
-
-      // 4. Check the Token
-      // $trim_token is now something like "CHM 1010" or "WSU Math Placement Level 24"
-      $is_taken = self::is_requirement_met($trim_token, $taken_classes);
-      
-      // Append 1 (true) or 0 (false) to our evaluation string
-      $eval_string .= $is_taken ? " 1 " : " 0 ";
-    }
-
-    // 5. Safe Evaluation
-    // $eval_string now looks like "( 1 || 0 ) && ( 1 )"
-    // valid boolean math.
-    try {
-        return eval("return ($eval_string);");
-    } catch (\Throwable $e) {
-        error_log("Prereq Parse Error: " . $e->getMessage() . " on string: " . $eval_string);
-        return false;
-    }
-  }
-
-  private static function is_requirement_met($requirement_name, $classes_taken_numbers) {
-    // Clean up the requirement name
-    $req = trim($requirement_name);
-
-    if (in_array($req, $classes_taken_numbers)) {
+    // No prerequisites
+    if (empty(trim($prereq_string)) || $prereq_string === 'N/A') {
         return true;
     }
 
-    if (strpos($req, 'Placement Level') !== false) {
-        // TODO: Implement actual check: $student->getPlacementLevel() >= 24
-        return true; 
+    // Remove informational notes like "(MTH 2310 can be taken concurrently)"
+    // This removes any set of parentheses containing the word "concurrently"
+    $logic_string = preg_replace('/\([^()]*concurrently[^()]*\)/i', '', $prereq_string);
+
+    // Remove high school classes
+    $logic_string = preg_replace('High School*\)', '1', $logic_string);
+
+    // Normalize the taken classes array to uppercase/trimmed to ensure matching works
+    // keys are not needed, just values.
+    $taken_classes = array_map(function($c) {
+        return strtoupper(trim($c));
+    }, $taken_classes);
+
+    // Pre-formatting: Convert logic words to PHP operators
+    // We use \b (word boundaries) to ensure we don't replace parts of words
+    $logic_string = preg_replace('/\band\b/i', '&&', $logic_string);
+    $logic_string = preg_replace('/\bor\b/i', '||', $logic_string);
+
+    // Find Courses and replace them with 1 (True) or 0 (False)
+    // Regex Pattern explanation:
+    // [A-Z]{2,5}  -> Matches 2 to 5 uppercase letters (e.g., "CS", "EGR")
+    // \s+         -> Matches one or more spaces
+    // \d{3,5}     -> Matches 3 to 5 digits (e.g., "3100")
+    $evaluated_string = preg_replace_callback(
+        '/([A-Z]{2,5}\s+\d{3,5})/', 
+        function($matches) use ($taken_classes) {
+            $course_found = trim($matches[1]);
+            
+            // Check if this specific course exists in our taken array
+            if (in_array($course_found, $taken_classes)) {
+                return '1'; // True
+            } else {
+                return '0'; // False
+            }
+        }, 
+        strtoupper($logic_string) // Pass uppercase string to match our uppercase array
+    );
+
+    // Remove EVERYTHING that is not logic or math.
+    // This strips out "Undergraduate level", "Minimum Grade of C", etc.
+    // We only keep: 1, 0, &, |, (, ), and spaces.
+    $final_math = preg_replace('/[^01&|() ]/', '', $evaluated_string);
+
+    // Might be unnecessary, but remove any empty parentheses that could cause eval errors
+    while (strpos($final_math, '()') !== false) {
+        $final_math = str_replace('()', '', $final_math);
     }
 
-    return false;
+    // Safe Evaluation
+    // Example final string: "(1 && (0 || 1))"
+    try {
+        return (bool) eval("return ($final_math);");
+    } catch (\Throwable $t) {
+        // If the string was malformed and caused a parse error
+        error_log('Prerequisite Parse Error: ' . $t->getMessage());
+        error_log('Offending String: ' . $final_math);
+        error_log('Original Prerequisite: ' . $prereq_string);
+        return false;
+    }
   }
 
   private static function clear_buffer(array $buffer, array $classes_taken, int $current_semester, int $desired_credits) {
