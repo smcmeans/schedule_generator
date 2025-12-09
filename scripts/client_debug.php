@@ -26,6 +26,17 @@ private static function get_all_classes_number(array $schedules) {
     return $all_courses_number;
   }
 
+private static function clear_buffer(array $buffer, array $classes_taken, int $current_semester, int $desired_credits) {
+  if ($desired_credits - self::get_total_credits($buffer) <= 1) {
+    foreach ($buffer as $c) {
+      $classes_taken[$current_semester][] = $c;
+      }
+      $current_semester++;
+      // Clear buffer for next semester
+      $buffer = [];
+  }
+}
+
 public static function sort_classes_by_prerequisite(array $classes, int $desired_credits) {
     // These are the classes that have been sorted already
     $classes_taken = [];
@@ -37,24 +48,25 @@ public static function sort_classes_by_prerequisite(array $classes, int $desired
     // Sort classes to better match levels (1000s, 2000s, etc.)
     $classes = self::sort_courses_by_number($classes);
 
-    for ($i = 0, $n = count($classes); $i < $n; $i++) {
-      if ($classes[$i]['prerequisite'] == 'N/A') {
-        // No prerequisite, can take this class now
-        $buffer[] = $classes[$i];
-        // Remove from original list
-        array_splice($classes, $i, 1);
-        // Adjust counters
-        $i--;
-        $n--;
-        if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-              // Add buffer to classes taken
-              foreach ($buffer as $c) {
-                $classes_taken[$current_semester][] = $c;
-              }
-              $current_semester++;
-              // Clear buffer for next semester
-              $buffer = [];
-            }
+    foreach ($classes as $id => $course) {
+      if ($course['prerequisite'] == 'N/A') {
+        // No prereqs, can be added to buffer
+        $buffer[] = $course;
+        if (!empty($course['linked_sections'])) {
+          foreach ($course['linked_sections'] as $linked_course) {
+            $linked_course_data = [
+              'title' => $linked_course->label(),
+              'number' => $linked_course->get('field_course_number')->value,
+              'credits' => $linked_course->get('field_credit_hours')->value,
+              'prerequisite' => $linked_course->get('field_prerequisite')->value
+            ];
+            print_r($linked_course_data);
+            $buffer[] = $linked_course_data;
+          }
+        }
+        // Remove from class list
+        unset($classes[$id]);
+        self::clear_buffer($buffer, $classes_taken, $current_semester, $desired_credits);
       }
     }
     if (!empty($buffer)) {
@@ -98,15 +110,7 @@ public static function sort_classes_by_prerequisite(array $classes, int $desired
               }
             }
             // If we have reached desired credits (mostly), finalize this semester
-            if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-              // Add buffer to classes taken
-              foreach ($buffer as $c) {
-                $classes_taken[$current_semester][] = $c;
-              }
-              $current_semester++;
-              // Clear buffer for next semester
-              $buffer = [];
-            }
+            self::clear_buffer($buffer, $classes_taken, $current_semester, $desired_credits);
           }
         }
       }
@@ -121,7 +125,6 @@ public static function sort_classes_by_prerequisite(array $classes, int $desired
         $buffer = [];
         // Set made changes back to true
         $made_changes = true;
-        echo "Cleared buffer";
       } else {
         // TODO: Get starter classes, like basic MTH classes, to break impossible prerequisites
         break; // No more changes can be made, impossible prerequisites
@@ -270,6 +273,11 @@ $student_transcript = [
         'credits' => 3,
         'prerequisite' => 'N/A',
     ],
+    [
+      'number' => 'IMP 9999',
+      'credits' => 10,
+      'prerequisite' => 'IMP 9999',
+    ]
 ];
 
 

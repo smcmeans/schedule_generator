@@ -54,6 +54,7 @@ class ScheduleGenerator {
                   'prerequisite' => $course->get('field_prerequisite')->value,
                   'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
                 ];
+                print_r($courses);
 
                 // // Add labs/recitations if they exist
                 // // Might want to move this to the final schedule generation command to ensure linked sections are not split
@@ -100,24 +101,25 @@ class ScheduleGenerator {
     // Sort classes to better match levels (1000s, 2000s, etc.)
     $classes = self::sort_courses_by_number($classes);
 
-    for ($i = 0, $n = count($classes); $i < $n; $i++) {
-      if ($classes[$i]['prerequisite'] == 'N/A') {
-        // No prerequisite, can take this class now
-        $buffer[] = $classes[$i];
-        // Remove from original list
-        array_splice($classes, $i, 1);
-        // Adjust counters
-        $i--;
-        $n--;
-        if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-              // Add buffer to classes taken
-              foreach ($buffer as $c) {
-                $classes_taken[$current_semester][] = $c;
-              }
-              $current_semester++;
-              // Clear buffer for next semester
-              $buffer = [];
-            }
+    foreach ($classes as $id => $course) {
+      if ($course['prerequisite'] == 'N/A') {
+        // No prereqs, can be added to buffer
+        $buffer[] = $course;
+        if (!empty($course['linked_sections'])) {
+          foreach ($course['linked_sections'] as $linked_course) {
+            $linked_course_data = [
+              'title' => $linked_course->label(),
+              'number' => $linked_course->get('field_course_number')->value,
+              'credits' => $linked_course->get('field_credit_hours')->value,
+              'prerequisite' => $linked_course->get('field_prerequisite')->value
+            ];
+            print_r($linked_course_data);
+            $buffer[] = $linked_course_data;
+          }
+        }
+        // Remove from class list
+        unset($classes[$id]);
+        self::clear_buffer($buffer, $classes_taken, $current_semester, $desired_credits);
       }
     }
     if (!empty($buffer)) {
@@ -298,6 +300,17 @@ class ScheduleGenerator {
         error_log('Offending String: ' . $final_math);
         error_log('Original Prerequisite: ' . $prereq_string);
         return false;
+    }
+  }
+
+  private static function clear_buffer(array $buffer, array $classes_taken, int $current_semester, int $desired_credits) {
+    if ($desired_credits - self::get_total_credits($buffer) <= 1) {
+      foreach ($buffer as $c) {
+        $classes_taken[$current_semester][] = $c;
+        }
+        $current_semester++;
+        // Clear buffer for next semester
+        $buffer = [];
     }
   }
 }
