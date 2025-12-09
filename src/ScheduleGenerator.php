@@ -122,7 +122,14 @@ class ScheduleGenerator {
         }
         // Remove from class list
         unset($classes[$id]);
-        $current_semester = self::clear_buffer($buffer, $classes_taken, $current_semester, $desired_credits);
+        if ($desired_credits - self::get_total_credits($buffer) <= 1) {
+          foreach ($buffer as $c) {
+            $classes_taken[$current_semester][] = $c;
+          }
+          $current_semester++;
+          // Clear buffer for next semester
+          $buffer = [];
+        }
       }
     }
     if (!empty($buffer)) {
