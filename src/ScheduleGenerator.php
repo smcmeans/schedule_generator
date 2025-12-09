@@ -55,7 +55,7 @@ class ScheduleGenerator {
                   'number' => $course->get('field_course_number')->value,
                   'credits' => $course->get('field_credit_hours')->value,
                   'prerequisite' => $course->get('field_prerequisite')->value,
-                  // 'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
+                  'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
                 ];
               }
             }
@@ -93,16 +93,16 @@ class ScheduleGenerator {
         // No prereqs, can be added to buffer
         $buffer[] = $course;
         if (!empty($course['linked_sections'])) {
-          foreach ($course['linked_sections'] as $linked_course) {
-            $linked_course_data = [
-              'title' => $linked_course->label(),
-              'number' => $linked_course->get('field_course_number')->value,
-              'credits' => $linked_course->get('field_credit_hours')->value,
-              'prerequisite' => $linked_course->get('field_prerequisite')->value
-            ];
-            print_r($linked_course_data);
-            $buffer[] = $linked_course_data;
-          }
+          // foreach ($course['linked_sections'] as $linked_course) {
+          //   $linked_course_data = [
+          //     'title' => $linked_course->label(),
+          //     'number' => $linked_course->get('field_course_number')->value,
+          //     'credits' => $linked_course->get('field_credit_hours')->value,
+          //     'prerequisite' => $linked_course->get('field_prerequisite')->value
+          //   ];
+          //   print_r($linked_course_data);
+          //   $buffer[] = $linked_course_data;
+          // }
         }
         // Remove from class list
         unset($classes[$id]);
