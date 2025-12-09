@@ -261,7 +261,7 @@ class ScheduleGenerator {
     $logic_string = preg_replace('/\([^()]*concurrently[^()]*\)/i', '', $prereq_string);
 
     // Remove high school classes
-    $logic_string = preg_replace('/High School*\)/', '1', $logic_string);
+    $logic_string = preg_replace('/High School.*\)/i', '1', $logic_string);
 
     // Normalize the taken classes array to uppercase/trimmed to ensure matching works
     // keys are not needed, just values.
