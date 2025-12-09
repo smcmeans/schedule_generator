@@ -229,6 +229,7 @@ class ScheduleGenerator {
       $total += (int) $course['credits'];
     }
     echo $total;
+    echo " ";
     return $total;
   }
 
@@ -296,7 +297,6 @@ class ScheduleGenerator {
     // Safe Evaluation
     // Example final string: "(1 && (0 || 1))"
     try {
-        error_log('Evaluating Prerequisite Logic: ' . $final_math);
         return (bool) eval("return ($final_math);");
     } catch (\Throwable $t) {
         // If the string was malformed and caused a parse error
