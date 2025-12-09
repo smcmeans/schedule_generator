@@ -157,6 +157,7 @@ class ScheduleGenerator {
                   'credits' => $linked_course->get('field_credit_hours')->value,
                   'prerequisite' => $linked_course->get('field_prerequisite')->value
                 ];
+                print_r($linked_course_data);
                 $buffer[] = $linked_course_data;
               }
             }
