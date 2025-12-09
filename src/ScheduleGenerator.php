@@ -57,22 +57,6 @@ class ScheduleGenerator {
                   'prerequisite' => $course->get('field_prerequisite')->value,
                   // 'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
                 ];
-                print_r($courses);
-
-                // // Add labs/recitations if they exist
-                // // Might want to move this to the final schedule generation command to ensure linked sections are not split
-                // // across semesters
-                // if ($course->hasField('field_linked_sections') && !$course->get('field_linked_sections')->isEmpty()) {
-                //   $linked_sections = $course->get('field_linked_sections')->referencedEntities();
-                //   foreach ($linked_sections as $section) {
-                //     $courses[$section->id()] = [
-                //       'title' => $section->label(),
-                //       'number' => $section->get('field_course_number')->value,
-                //       'credits' => $section->get('field_credit_hours')->value,
-                //       'prerequisite' => $section->get('field_prerequisite')->value,
-                //     ];
-                //   }
-                // }
               }
             }
           }
