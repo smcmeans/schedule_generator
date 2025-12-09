@@ -52,7 +52,7 @@ class ScheduleGenerator {
                   'number' => $course->get('field_course_number')->value,
                   'credits' => $course->get('field_credit_hours')->value,
                   'prerequisite' => $course->get('field_prerequisite')->value,
-                  'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
+                  // 'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
                 ];
                 print_r($courses);
 
