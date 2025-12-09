@@ -46,16 +46,36 @@ class ScheduleGenerator {
           foreach ($requirement_options as $option) {
             // Inner paragraph loop
 
+            
+
             // Get courses from each option
             if ($option->hasField('field_option_courses')) {
               $course_entities = $option->get('field_option_courses')->referencedEntities();
               foreach ($course_entities as $course) {
+                $formatted_linked_sections = [];
+    
+                if (!$course->get('field_linked_sections')->isEmpty()) {
+                  $linked_entities = $course->get('field_linked_sections')->referencedEntities();
+        
+                  foreach ($linked_entities as $section) {
+                    $formatted_linked_sections[] = [
+                      'id' => $section->id(),
+                      'title' => $section->label(),
+                      'number' => $section->get('field_course_number')->value,
+                      'credits' => $section->get('field_credit_hours')->value,
+                      'prerequisite' => $section->get('field_prerequisite')->value ?? 'N/A',
+                    ];
+                  }
+                }
+
+
                 $courses[$course->id()] = [
+                  'id' => $course->id(),
                   'title' => $course->label(),
                   'number' => $course->get('field_course_number')->value,
                   'credits' => $course->get('field_credit_hours')->value,
                   'prerequisite' => $course->get('field_prerequisite')->value,
-                  'linked_sections' => $course->get('field_linked_sections')->referencedEntities(),
+                  'linked_sections' => $formatted_linked_sections,
                 ];
               }
             }
@@ -93,16 +113,9 @@ class ScheduleGenerator {
         // No prereqs, can be added to buffer
         $buffer[] = $course;
         if (!empty($course['linked_sections'])) {
-          // foreach ($course['linked_sections'] as $linked_course) {
-          //   $linked_course_data = [
-          //     'title' => $linked_course->label(),
-          //     'number' => $linked_course->get('field_course_number')->value,
-          //     'credits' => $linked_course->get('field_credit_hours')->value,
-          //     'prerequisite' => $linked_course->get('field_prerequisite')->value
-          //   ];
-          //   print_r($linked_course_data);
-          //   $buffer[] = $linked_course_data;
-          // }
+          foreach ($course['linked_sections'] as $linked_course) {
+            $buffer[] = $linked_course;
+          }
         }
         // Remove from class list
         unset($classes[$id]);
