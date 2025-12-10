@@ -32,3 +32,7 @@ if (method_exists(ScheduleGenerator::class, 'get_all_classes')) {
 } else {
     echo "Function 'get_all_classes' not found. Make sure the module is enabled.\n";
 }
+
+if (method_exists(ScheduleGenerator::class, 'get_upcoming_semesters')) {
+    print_r(ScheduleGenerator::get_upcoming_semesters(12));
+}
