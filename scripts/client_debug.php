@@ -152,7 +152,13 @@ public static function check_prerequisites($prereq_string, array $taken_classes)
     // Remove informational notes like "(MTH 2310 can be taken concurrently)"
     // This removes any set of parentheses containing the word "concurrently"
     $logic_string = preg_replace('/\([^()]*concurrently[^()]*\)/i', '', $prereq_string);
-
+    if ($prereq_string == '(Undergraduate level CHM 1010 Minimum Grade of D or Undergraduate level CHM 1015 Minimum Grade of D or Undergraduate level CHM 1023 Minimum Grade of D or Undergraduate level CHM 1060 Minimum Grade of D or High School Chemistry 1) and (WSU Math Placement Level 24 or Undergraduate level MTH 1270 Minimum Grade of D or Undergraduate level DEV 0280 Minimum Grade of P (DEV 0280 can be taken concurrently) or Undergraduate level DEV 0270 Minimum Grade of P)') {
+      echo $logic_string . "\n";
+    }
+    $logic_string = preg_replace('/High School.*\)/i', '1)', $logic_string);
+    if ($prereq_string == '(Undergraduate level CHM 1010 Minimum Grade of D or Undergraduate level CHM 1015 Minimum Grade of D or Undergraduate level CHM 1023 Minimum Grade of D or Undergraduate level CHM 1060 Minimum Grade of D or High School Chemistry 1) and (WSU Math Placement Level 24 or Undergraduate level MTH 1270 Minimum Grade of D or Undergraduate level DEV 0280 Minimum Grade of P (DEV 0280 can be taken concurrently) or Undergraduate level DEV 0270 Minimum Grade of P)') {
+      echo $logic_string;
+    }
     // Normalize the taken classes array to uppercase/trimmed to ensure matching works
     // keys are not needed, just values.
     $taken_classes = array_map(function($c) {
@@ -277,6 +283,11 @@ $student_transcript = [
       'number' => 'IMP 9999',
       'credits' => 10,
       'prerequisite' => 'IMP 9999',
+    ],
+    [
+      'number' => 'TST 1000',
+      'credits' => 5,
+      'prerequisite' => '(Undergraduate level CHM 1010 Minimum Grade of D or Undergraduate level CHM 1015 Minimum Grade of D or Undergraduate level CHM 1023 Minimum Grade of D or Undergraduate level CHM 1060 Minimum Grade of D or High School Chemistry 1) and (WSU Math Placement Level 24 or Undergraduate level MTH 1270 Minimum Grade of D or Undergraduate level DEV 0280 Minimum Grade of P (DEV 0280 can be taken concurrently) or Undergraduate level DEV 0270 Minimum Grade of P)',
     ]
 ];
 

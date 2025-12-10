@@ -27,6 +27,9 @@ class ScheduleGenerator {
 
   // Tested works
   public static function get_all_classes(NodeInterface $studentProfile) {
+    $return_array = [];
+
+    $selected_courses = [];
     $courses = [];
 
     $majors = $studentProfile->get('field_majors')->referencedEntities();
@@ -43,10 +46,9 @@ class ScheduleGenerator {
 
           // Find inner paragraphs of each requirement group
           $requirement_options = $options->get('field_requirement_options')->referencedEntities();
+          $i = 0;
           foreach ($requirement_options as $option) {
             // Inner paragraph loop
-
-            
 
             // Get courses from each option
             if ($option->hasField('field_option_courses')) {
@@ -78,6 +80,18 @@ class ScheduleGenerator {
                   'linked_sections' => $formatted_linked_sections,
                 ];
               }
+              // Add first class to selected courses array
+              if ($i == 0) {
+                $selected_courses[$course->id()] = [
+                  'id' => $course->id(),
+                  'title' => $course->label(),
+                  'number' => $course->get('field_course_number')->value,
+                  'credits' => $course->get('field_credit_hours')->value,
+                  'prerequisite' => $course->get('field_prerequisite')->value,
+                  'linked_sections' => $formatted_linked_sections,
+                ];
+              }
+              $i++;
             }
           }
         }
@@ -85,7 +99,9 @@ class ScheduleGenerator {
     }
 
     // Return unique courses as a numerically indexed array
-    return array_values($courses);
+    $return_array[] = array_values($selected_courses);
+    $return_array[] = array_values($courses);
+    return array_values($return_array);
   }
 
   // Untested
@@ -97,7 +113,14 @@ class ScheduleGenerator {
   }
 
   // Tested works
-  public static function sort_classes_by_prerequisite(array $classes, int $desired_credits) {
+  public static function sort_classes_by_prerequisite(array $all_classes, int $desired_credits) {
+    
+    // Selected classes
+    $classes = $all_classes[0];
+
+    // All classes in major, useful for searching for prerequisites
+    $program_classes = $all_classes[1];
+    
     // These are the classes that have been sorted already
     $classes_taken = [];
     $current_semester = 0;
@@ -189,8 +212,8 @@ class ScheduleGenerator {
         $made_changes = true;
         echo "Cleared buffer";
       } else {
-        // TODO: Get starter classes, like basic MTH classes, to break impossible prerequisites
-        break; // No more changes can be made, impossible prerequisites
+        // Impossible prerequisites, search program_classes for them
+        break;
       }
     }
 
@@ -198,8 +221,16 @@ class ScheduleGenerator {
     if (!empty($classes)) {
       // Just append them at the end for now
       foreach ($classes as $course) {
-        $classes_taken[] = $course;
+        $buffer[] = $course;
         error_log('Unresolvable Prerequisite for Course: ' . $course['number'] . ' | Prerequisite: ' . $course['prerequisite']);
+        if ($desired_credits - self::get_total_credits($buffer) <= 1) {
+          foreach ($buffer as $c) {
+            $classes_taken[$current_semester][] = $c;
+          }
+          $current_semester++;
+          // Clear buffer for next semester
+          $buffer = [];
+        }
       }  
     }
     
@@ -318,4 +349,80 @@ class ScheduleGenerator {
     }
     return $current_semester;
   }
+
+  /**
+   * Helper: Get upcoming semester taxonomy terms.
+   * Assumes terms are named like "Fall 2025", "Spring 2026".
+   */
+  public static function get_upcoming_semesters($limit = 12) {
+    // 1. Load terms from the 'semesters' vocabulary
+    $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+    $query = $storage->getQuery()
+      ->condition('vid', 'semesters')
+      ->sort('name', 'ASC') 
+      ->accessCheck(TRUE);
+      
+    $tids = $query->execute();
+    $terms = $storage->loadMultiple($tids);
+
+    return array_values($terms);
+  }
+
+public static function save_schedule_to_node(NodeInterface $student_node, array $schedule) {
+    
+    // 1. Get the Semester Taxonomy Terms (to map index 1 -> Fall 2025)
+    $semester_terms = self::get_upcoming_semesters();
+
+    // 2. Clear the existing Academic Plan to avoid duplicates
+    // Note: This removes the reference, but the old paragraph entities remain in the DB.
+    // Drupal garbage collection eventually handles them, or you can delete them manually here.
+    $student_node->set('field_academic_plan', []);
+
+    // 3. Loop through the Generated Schedule
+    // $semester_index is 1, 2, 3...
+    // $classes is the array of course data
+    foreach ($schedule as $semester_index => $classes) {
+        
+        // Safety: Ensure we have a matching Taxonomy Term
+        // We use ($semester_index - 1) because $schedule starts at 1, but array starts at 0
+        $term_index = $semester_index - 1;
+        
+        if (!isset($semester_terms[$term_index])) {
+            \Drupal::logger('schedule_generator')->warning('Not enough semester terms created in the system to cover the generated schedule.');
+            continue; 
+        }
+
+        $semester_term_id = $semester_terms[$term_index]->id();
+
+        // 4. Create the Paragraph Entity
+        // Replace 'academic_semester' with your Paragraph Machine Name
+        $paragraph = Paragraph::create([
+            'type' => 'academic_semester', 
+            'field_semester' => $semester_term_id,
+        ]);
+
+        // 5. Add Classes to the Paragraph
+        $class_ids = [];
+        foreach ($classes as $class_data) {
+            if (isset($class_data['id'])) {
+                $class_ids[] = $class_data['id'];
+            }
+        }
+        
+        // field_planned_classes is the Entity Reference field on the Paragraph
+        $paragraph->set('field_planned_classes', $class_ids);
+        
+        // 6. Save the Paragraph
+        $paragraph->isNew();
+        $paragraph->save();
+
+        // 7. Attach Paragraph to Student Node
+        $student_node->get('field_academic_plan')->appendItem($paragraph);
+    }
+
+    // 8. Save the Student Node
+    $student_node->save();
+    
+    return true;
+}
 }
