@@ -35,7 +35,7 @@ class GenerateScheduleForm extends FormBase
       if ($student) {
         $all_classes = ScheduleGenerator::get_all_classes($student);
 
-        $sorted = ScheduleGenerator::sort_classes_by_prerequisite($all_classes);
+        $sorted = ScheduleGenerator::sort_classes_by_prerequisite($all_classes, ScheduleGenerator::get_desired_credit_hours($student));
 
         ScheduleGenerator::save_schedule_to_node($student, $sorted);
 
