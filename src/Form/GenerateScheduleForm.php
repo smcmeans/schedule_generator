@@ -33,9 +33,13 @@ class GenerateScheduleForm extends FormBase
       $student = \Drupal::service('schedule_generator.student_manager')->getStudentProfileNode();
 
       if ($student) {
+        $coop = false;
+        if ($student->hasField('field_coop') && !$student->get('field_coop')->isEmpty()) {
+          $coop = $student->get('field_coop')->value;
+        }
         $all_classes = ScheduleGenerator::get_all_classes($student);
 
-        $sorted = ScheduleGenerator::sort_classes_by_prerequisite($all_classes, ScheduleGenerator::get_desired_credit_hours($student));
+        $sorted = ScheduleGenerator::sort_classes_by_prerequisite($all_classes, ScheduleGenerator::get_desired_credit_hours($student), $coop);
 
         ScheduleGenerator::save_schedule_to_node($student, $sorted);
 
