@@ -22,9 +22,6 @@ class ScheduleGenerator
   public static function get_desired_credit_hours(NodeInterface $studentProfile)
   {
     $credit_hours = $studentProfile->get('field_desired_credit_hours')->value;
-
-    return 15;
-
     return is_numeric($credit_hours) ? (int) $credit_hours : 12; // Default to 12 if not set
   }
 
