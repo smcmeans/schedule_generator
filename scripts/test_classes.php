@@ -17,7 +17,7 @@ echo "------------------------------------------------\n";
 
 if (method_exists(ScheduleGenerator::class, 'get_all_classes')) {
     $results = ScheduleGenerator::get_all_classes($node);
-    
+
     // Print results
     print_r($results);
     // Additionally, test sorting by prerequisites
@@ -26,6 +26,20 @@ if (method_exists(ScheduleGenerator::class, 'get_all_classes')) {
         echo "------------------------------------------------\n";
         echo "Sorted Results by Course Prerequisite:\n";
         print_r($sorted_results);
+
+        if (method_exists(ScheduleGenerator::class, 'save_schedule_to_node')) {
+            $input = readline("Do you want to save this schedule to the node? (y/n): ");
+            if (strtolower(trim($input)) === 'y') {
+
+                echo "Saving schedule to node...\n";
+
+                ScheduleGenerator::save_schedule_to_node($node, $sorted_results);
+
+                echo "Save complete!\n";
+            } else {
+                echo "Operation skipped.\n";
+            }
+        }
     } else {
         echo "Function 'sort_classes_by_prerequisite' not found.\n";
     }
