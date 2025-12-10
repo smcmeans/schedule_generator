@@ -401,9 +401,8 @@ class ScheduleGenerator
       $semester_term_id = $semester_terms[$semester_index]->id();
 
       // Create the Paragraph Entity
-      // Replace 'academic_semester' with your Paragraph Machine Name
       $paragraph = Paragraph::create([
-        'type' => 'academic_semester',
+        'type' => 'semester_schedule',
         'field_semester' => $semester_term_id,
       ]);
 
