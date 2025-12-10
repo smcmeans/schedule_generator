@@ -5,6 +5,7 @@ namespace Drupal\schedule_generator;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\Entity\Paragraph;
+use \Drupal\node\Entity\Node;
 
 class ScheduleGenerator
 {
@@ -115,7 +116,7 @@ class ScheduleGenerator
   }
 
   // Tested works
-  public static function sort_classes_by_prerequisite(array $all_classes, int $desired_credits)
+  public static function sort_classes_by_prerequisite(array $all_classes, int $desired_credits, bool $coop)
   {
 
     // Selected classes
@@ -152,6 +153,10 @@ class ScheduleGenerator
           $current_semester++;
           // Clear buffer for next semester
           $buffer = [];
+          if ($coop && $current_semester == 5) {
+            self::add_coop($classes_taken);
+            $current_semester++;
+          }
         }
       }
     }
@@ -162,6 +167,10 @@ class ScheduleGenerator
       $current_semester++;
       // Clear buffer for next semester
       $buffer = [];
+      if ($coop && $current_semester == 5) {
+        self::add_coop($classes_taken);
+        $current_semester++;
+      }
     }
 
     // At this point, we have added all classes without prerequisites
@@ -198,6 +207,11 @@ class ScheduleGenerator
               $current_semester++;
               // Clear buffer for next semester
               $buffer = [];
+              // Check if they want a co-op
+              if ($coop && $current_semester == 5) {
+                self::add_coop($classes_taken);
+                $current_semester++;
+              }
             }
           }
         }
@@ -213,6 +227,11 @@ class ScheduleGenerator
         $buffer = [];
         // Set made changes back to true
         $made_changes = true;
+        // Check if they want a co-op
+        if ($coop && $current_semester == 5) {
+          self::add_coop($classes_taken);
+          $current_semester++;
+        }
         echo "Cleared buffer";
       } else {
         // Impossible prerequisites, search program_classes for them
@@ -233,6 +252,10 @@ class ScheduleGenerator
           $current_semester++;
           // Clear buffer for next semester
           $buffer = [];
+          if ($coop && $current_semester == 5) {
+            self::add_coop($classes_taken);
+            $current_semester++;
+          }
         }
       }
     }
@@ -355,6 +378,24 @@ class ScheduleGenerator
       $buffer = [];
     }
     return $current_semester;
+  }
+
+  private static function add_coop(array &$courses)
+  {
+    $coop_id = 399;
+
+    $coop = Node::load($coop_id);
+    if ($coop) {
+      $coop_data = [
+        'id' => $coop_id,
+        'title' => $coop->label(),
+        'number' => $coop->get('field_course_number')->value,
+        'credits' => $coop->get('field_credit_hours')->value,
+        'prerequisite' => $coop->get('field_prerequisite')->value,
+      ];
+
+      $courses[] = [$coop_data];
+    }
   }
 
   /**
