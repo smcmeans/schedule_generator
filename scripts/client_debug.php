@@ -5,14 +5,17 @@
  * Run this in VS Code terminal: php debug_prereq.php
  */
 
-class ScheduleGenerator {
-public static function sort_courses_by_number(array $classes) {
-    usort($classes, function($a, $b) {
+class ScheduleGenerator
+{
+  public static function sort_courses_by_number(array $classes)
+  {
+    usort($classes, function ($a, $b) {
       return strcmp(preg_replace('[\D]', '', $a['number']), preg_replace('[\D]', '', $b['number']));
     });
     return $classes;
   }
-private static function get_all_classes_number(array $schedules) {
+  private static function get_all_classes_number(array $schedules)
+  {
     $all_courses_number = [];
     // Schedules should be a 2D array, but if no data has been added yet, just return empty
     if (empty($schedules)) {
@@ -26,18 +29,20 @@ private static function get_all_classes_number(array $schedules) {
     return $all_courses_number;
   }
 
-private static function clear_buffer(array $buffer, array $classes_taken, int $current_semester, int $desired_credits) {
-  if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-    foreach ($buffer as $c) {
-      $classes_taken[$current_semester][] = $c;
+  private static function clear_buffer(array $buffer, array $classes_taken, int $current_semester, int $desired_credits)
+  {
+    if ($desired_credits - self::get_total_credits($buffer) <= 1) {
+      foreach ($buffer as $c) {
+        $classes_taken[$current_semester][] = $c;
       }
       $current_semester++;
       // Clear buffer for next semester
       $buffer = [];
+    }
   }
-}
 
-public static function sort_classes_by_prerequisite(array $classes, int $desired_credits) {
+  public static function sort_classes_by_prerequisite(array $classes, int $desired_credits)
+  {
     // These are the classes that have been sorted already
     $classes_taken = [];
     $current_semester = 0;
@@ -71,11 +76,11 @@ public static function sort_classes_by_prerequisite(array $classes, int $desired
     }
     if (!empty($buffer)) {
       foreach ($buffer as $c) {
-                $classes_taken[$current_semester][] = $c;
-              }
-              $current_semester++;
-              // Clear buffer for next semester
-              $buffer = [];
+        $classes_taken[$current_semester][] = $c;
+      }
+      $current_semester++;
+      // Clear buffer for next semester
+      $buffer = [];
     }
 
     // At this point, we have added all classes without prerequisites
@@ -137,16 +142,17 @@ public static function sort_classes_by_prerequisite(array $classes, int $desired
       foreach ($classes as $course) {
         $classes_taken[] = $course;
         error_log('Unresolvable Prerequisite for Course: ' . $course['number'] . ' | Prerequisite: ' . $course['prerequisite']);
-      }  
+      }
     }
-    
+
     return array_values($classes_taken);
   }
 
-public static function check_prerequisites($prereq_string, array $taken_classes) {
+  public static function check_prerequisites($prereq_string, array $taken_classes)
+  {
     // No prerequisites
     if (empty(trim($prereq_string)) || $prereq_string === 'N/A') {
-        return true;
+      return true;
     }
 
     // Remove informational notes like "(MTH 2310 can be taken concurrently)"
@@ -161,8 +167,8 @@ public static function check_prerequisites($prereq_string, array $taken_classes)
     }
     // Normalize the taken classes array to uppercase/trimmed to ensure matching works
     // keys are not needed, just values.
-    $taken_classes = array_map(function($c) {
-        return strtoupper(trim($c));
+    $taken_classes = array_map(function ($c) {
+      return strtoupper(trim($c));
     }, $taken_classes);
 
     // Pre-formatting: Convert logic words to PHP operators
@@ -176,18 +182,18 @@ public static function check_prerequisites($prereq_string, array $taken_classes)
     // \s+         -> Matches one or more spaces
     // \d{3,5}     -> Matches 3 to 5 digits (e.g., "3100")
     $evaluated_string = preg_replace_callback(
-        '/([A-Z]{2,5}\s+\d{3,5})/', 
-        function($matches) use ($taken_classes) {
-            $course_found = trim($matches[1]);
-            
-            // Check if this specific course exists in our taken array
-            if (in_array($course_found, $taken_classes)) {
-                return '1'; // True
-            } else {
-                return '0'; // False
-            }
-        }, 
-        strtoupper($logic_string) // Pass uppercase string to match our uppercase array
+      '/([A-Z]{2,5}\s+\d{3,5})/',
+      function ($matches) use ($taken_classes) {
+        $course_found = trim($matches[1]);
+
+        // Check if this specific course exists in our taken array
+        if (in_array($course_found, $taken_classes)) {
+          return '1'; // True
+        } else {
+          return '0'; // False
+        }
+      },
+      strtoupper($logic_string) // Pass uppercase string to match our uppercase array
     );
 
     // Remove EVERYTHING that is not logic or math.
@@ -197,24 +203,25 @@ public static function check_prerequisites($prereq_string, array $taken_classes)
 
     // Might be unnecessary, but remove any empty parentheses that could cause eval errors
     while (strpos($final_math, '()') !== false) {
-        $final_math = str_replace('()', '', $final_math);
+      $final_math = str_replace('()', '', $final_math);
     }
 
     // Safe Evaluation
     // Example final string: "(1 && (0 || 1))"
 
     try {
-        return (bool) eval("return ($final_math);");
+      return (bool) eval("return ($final_math);");
     } catch (\Throwable $t) {
-        // If the string was malformed and caused a parse error
-        error_log('Prerequisite Parse Error: ' . $t->getMessage());
-        error_log('Offending String: ' . $final_math);
-        error_log('Original Prerequisite: ' . $prereq_string);
-        return false;
+      // If the string was malformed and caused a parse error
+      error_log('Prerequisite Parse Error: ' . $t->getMessage());
+      error_log('Offending String: ' . $final_math);
+      error_log('Original Prerequisite: ' . $prereq_string);
+      return false;
     }
   }
 
-private static function get_total_credits(array $courses) {
+  private static function get_total_credits(array $courses)
+  {
     $total = 0;
     foreach ($courses as $course) {
       $total += (int) $course['credits'];
@@ -229,66 +236,66 @@ private static function get_total_credits(array $courses) {
 
 // 1. Define the classes the student has taken
 $student_transcript = [
-    [
-        'number' => 'MTH 2300',
-        'credits' => 4,
-        'prerequisite' => 'WSU Math Placement Level 50 or Undergraduate level MTH 1350 Minimum Grade of B or Undergraduate level MTH 0300 Minimum Grade of P (MTH 0300 can be taken concurrently)',
-    ],
-    [
-        'number' => 'MTH 2310',
-        'credits' => 4,
-        'prerequisite' => 'Undergraduate level MTH 2300 Minimum Grade of D',
-    ],
-    [
-        'number' => 'MTH 2530',
-        'credits' => 3,
-        'prerequisite' => 'Undergraduate level MTH 2300 Minimum Grade of D',
-    ],
-    [
-        'number' => 'MTH 2320',
-        'credits' => 4,
-        'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D',
-    ],
-    [
-        'number' => 'MTH 2330',
-        'credits' => 3,
-        'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D',
-    ],
-    [
-        'number' => 'MTH 2350',
-        'credits' => 4,
-        'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D',
-    ],
-    [
-        'number' => 'MTH 2570',
-        'credits' => 3,
-        'prerequisite' => 'Undergraduate level MTH 1280 Minimum Grade of D or WSU Math Placement Level 40',
-    ],
-    [
-        'number' => 'MTH 2800',
-        'credits' => 4,
-        'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D or (Undergraduate level MTH 2300 Minimum Grade of C and Undergraduate level MTH 2310 Minimum Grade of D (MTH 2310 can be taken concurrently))',
-    ],
-    [
-        'number' => 'MTH 1350',
-        'credits' => 3,
-        'prerequisite' => 'Undergraduate level MTH 1280 Minimum Grade of D or WSU Math Placement Level 40',
-    ],
-    [
-        'number' => 'MTH 1280',
-        'credits' => 3,
-        'prerequisite' => 'N/A',
-    ],
-    [
-      'number' => 'IMP 9999',
-      'credits' => 10,
-      'prerequisite' => 'IMP 9999',
-    ],
-    [
-      'number' => 'TST 1000',
-      'credits' => 5,
-      'prerequisite' => '(Undergraduate level CHM 1010 Minimum Grade of D or Undergraduate level CHM 1015 Minimum Grade of D or Undergraduate level CHM 1023 Minimum Grade of D or Undergraduate level CHM 1060 Minimum Grade of D or High School Chemistry 1) and (WSU Math Placement Level 24 or Undergraduate level MTH 1270 Minimum Grade of D or Undergraduate level DEV 0280 Minimum Grade of P (DEV 0280 can be taken concurrently) or Undergraduate level DEV 0270 Minimum Grade of P)',
-    ]
+  [
+    'number' => 'MTH 2300',
+    'credits' => 4,
+    'prerequisite' => 'WSU Math Placement Level 50 or Undergraduate level MTH 1350 Minimum Grade of B or Undergraduate level MTH 0300 Minimum Grade of P (MTH 0300 can be taken concurrently)',
+  ],
+  [
+    'number' => 'MTH 2310',
+    'credits' => 4,
+    'prerequisite' => 'Undergraduate level MTH 2300 Minimum Grade of D',
+  ],
+  [
+    'number' => 'MTH 2530',
+    'credits' => 3,
+    'prerequisite' => 'Undergraduate level MTH 2300 Minimum Grade of D',
+  ],
+  [
+    'number' => 'MTH 2320',
+    'credits' => 4,
+    'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D',
+  ],
+  [
+    'number' => 'MTH 2330',
+    'credits' => 3,
+    'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D',
+  ],
+  [
+    'number' => 'MTH 2350',
+    'credits' => 4,
+    'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D',
+  ],
+  [
+    'number' => 'MTH 2570',
+    'credits' => 3,
+    'prerequisite' => 'Undergraduate level MTH 1280 Minimum Grade of D or WSU Math Placement Level 40',
+  ],
+  [
+    'number' => 'MTH 2800',
+    'credits' => 4,
+    'prerequisite' => 'Undergraduate level MTH 2310 Minimum Grade of D or (Undergraduate level MTH 2300 Minimum Grade of C and Undergraduate level MTH 2310 Minimum Grade of D (MTH 2310 can be taken concurrently))',
+  ],
+  [
+    'number' => 'MTH 1350',
+    'credits' => 3,
+    'prerequisite' => 'Undergraduate level MTH 1280 Minimum Grade of D or WSU Math Placement Level 40',
+  ],
+  [
+    'number' => 'MTH 1280',
+    'credits' => 3,
+    'prerequisite' => 'N/A',
+  ],
+  [
+    'number' => 'IMP 9999',
+    'credits' => 10,
+    'prerequisite' => 'IMP 9999',
+  ],
+  [
+    'number' => 'TST 1000',
+    'credits' => 5,
+    'prerequisite' => '(Undergraduate level CHM 1010 Minimum Grade of D or Undergraduate level CHM 1015 Minimum Grade of D or Undergraduate level CHM 1023 Minimum Grade of D or Undergraduate level CHM 1060 Minimum Grade of D or High School Chemistry 1) and (WSU Math Placement Level 24 or Undergraduate level MTH 1270 Minimum Grade of D or Undergraduate level DEV 0280 Minimum Grade of P (DEV 0280 can be taken concurrently) or Undergraduate level DEV 0270 Minimum Grade of P)',
+  ]
 ];
 
 
