@@ -46,10 +46,10 @@ class ScheduleGenerator {
 
           // Find inner paragraphs of each requirement group
           $requirement_options = $options->get('field_requirement_options')->referencedEntities();
-          $i = 0;
+          
           foreach ($requirement_options as $option) {
             // Inner paragraph loop
-
+            $i = 0;
             // Get courses from each option
             if ($option->hasField('field_option_courses')) {
               $course_entities = $option->get('field_option_courses')->referencedEntities();
@@ -370,15 +370,15 @@ class ScheduleGenerator {
 
 public static function save_schedule_to_node(NodeInterface $student_node, array $schedule) {
     
-    // 1. Get the Semester Taxonomy Terms (to map index 1 -> Fall 2025)
+    // Get the Semester Taxonomy Terms (to map index 1 -> Fall 2025)
     $semester_terms = self::get_upcoming_semesters();
 
-    // 2. Clear the existing Academic Plan to avoid duplicates
+    // Clear the existing Academic Plan to avoid duplicates
     // Note: This removes the reference, but the old paragraph entities remain in the DB.
     // Drupal garbage collection eventually handles them, or you can delete them manually here.
     $student_node->set('field_academic_plan', []);
 
-    // 3. Loop through the Generated Schedule
+    // Loop through the Generated Schedule
     // $semester_index is 1, 2, 3...
     // $classes is the array of course data
     foreach ($schedule as $semester_index => $classes) {
@@ -394,14 +394,14 @@ public static function save_schedule_to_node(NodeInterface $student_node, array 
 
         $semester_term_id = $semester_terms[$term_index]->id();
 
-        // 4. Create the Paragraph Entity
+        // Create the Paragraph Entity
         // Replace 'academic_semester' with your Paragraph Machine Name
         $paragraph = Paragraph::create([
             'type' => 'academic_semester', 
             'field_semester' => $semester_term_id,
         ]);
 
-        // 5. Add Classes to the Paragraph
+        // Add Classes to the Paragraph
         $class_ids = [];
         foreach ($classes as $class_data) {
             if (isset($class_data['id'])) {
@@ -412,15 +412,15 @@ public static function save_schedule_to_node(NodeInterface $student_node, array 
         // field_planned_classes is the Entity Reference field on the Paragraph
         $paragraph->set('field_planned_classes', $class_ids);
         
-        // 6. Save the Paragraph
+        // Save the Paragraph
         $paragraph->isNew();
         $paragraph->save();
 
-        // 7. Attach Paragraph to Student Node
+        // Attach Paragraph to Student Node
         $student_node->get('field_academic_plan')->appendItem($paragraph);
     }
 
-    // 8. Save the Student Node
+    // Save the Student Node
     $student_node->save();
     
     return true;
