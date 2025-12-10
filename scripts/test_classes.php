@@ -34,5 +34,9 @@ if (method_exists(ScheduleGenerator::class, 'get_all_classes')) {
 }
 
 if (method_exists(ScheduleGenerator::class, 'get_upcoming_semesters')) {
-    print_r(ScheduleGenerator::get_upcoming_semesters(12));
+    $semesters = ScheduleGenerator::get_upcoming_semesters(12);
+    foreach ($semesters as $semester) {
+        echo $semester->label();
+        echo " ";
+    }
 }
