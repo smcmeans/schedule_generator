@@ -355,11 +355,11 @@ class ScheduleGenerator {
    * Assumes terms are named like "Fall 2025", "Spring 2026".
    */
   public static function get_upcoming_semesters($limit = 12) {
-    // 1. Load terms from the 'semesters' vocabulary
+    // Load terms from the 'semesters' vocabulary
     $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
     $query = $storage->getQuery()
       ->condition('vid', 'semesters')
-      ->sort('name', 'ASC') 
+      ->sort('weight', 'ASC') 
       ->accessCheck(TRUE);
       
     $tids = $query->execute();
