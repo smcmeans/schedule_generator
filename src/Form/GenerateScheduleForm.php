@@ -4,27 +4,49 @@ namespace Drupal\schedule_generator\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\schedule_generator\ScheduleGenerator;
 
-class GenerateScheduleForm extends FormBase {
+class GenerateScheduleForm extends FormBase
+{
 
-  public function getFormId() {
+  public function getFormId()
+  {
     return 'schedule_generator_generate_form';
   }
 
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['markup'] = [
-      '#markup' => 'This is a placeholder form.',
+  public function buildForm(array $form, FormStateInterface $form_state)
+  {
+    $form['actions']['#type'] = 'actions';
+    $form['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Generate Schedule'),
+      '#button_type' => 'primary',
     ];
+
     return $form;
   }
 
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Load Student
-    $student = \Drupal::service('schedule_generator.student_manager')->getStudentProfileNode();
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
+    try {
+      $student = \Drupal::service('schedule_generator.student_manager')->getStudentProfileNode();
 
-    $all_classes = ScheduleGenerator::get_all_classes($student);
-    $schedule = ScheduleGenerator::sort_classes_by_prerequisite($all_classes);
+      if ($student) {
+        $all_classes = ScheduleGenerator::get_all_classes($student);
 
-    ScheduleGenerator::save_schedule_to_node($student, $schedule);
+        $sorted = ScheduleGenerator::sort_classes_by_prerequisite($all_classes);
+
+        ScheduleGenerator::save_schedule_to_node($student, $sorted);
+
+        $this->messenger()->addStatus($this->t('Schedule generated successfully!'));
+      } else {
+        $this->messenger()->addError($this->t('Could not find a student profile for the current user.'));
+      }
+    } catch (\Exception $e) {
+      $this->messenger()->addError($this->t('An error occurred: @error', ['@error' => $e->getMessage()]));
+    }
+    // Refresh page
+    $form_state->setRedirect('<current>');
   }
 }
