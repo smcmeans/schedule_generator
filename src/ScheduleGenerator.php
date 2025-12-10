@@ -160,17 +160,14 @@ class ScheduleGenerator
         }
       }
     }
-    if (!empty($buffer)) {
+    // Check if buffer has been cleared yet
+    if ($current_semester == 0 && !empty($buffer)) {
       foreach ($buffer as $c) {
         $classes_taken[$current_semester][] = $c;
       }
       $current_semester++;
       // Clear buffer for next semester
       $buffer = [];
-      if ($coop && $current_semester == 5) {
-        self::add_coop($classes_taken);
-        $current_semester++;
-      }
     }
 
     // At this point, we have added all classes without prerequisites
