@@ -486,7 +486,7 @@ class ScheduleGenerator
    * Returns the id of the desired graduation semester of the passed node
    */
   private static function get_desired_graduation_semester(NodeInterface $student_node) {
-    return $student_node->get('field_graduation_semester')->id();
+    return $student_node->get('field_graduation_semester')->value->id();
   }
 
   /**
