@@ -462,12 +462,12 @@ class ScheduleGenerator
    * Get upcoming semester taxonomy terms.
    * 
    * @param int $limit
-   * The amount of semesters to get, max is 12
+   * The amount of semesters to get, max is 32
    * 
    * @return array
    * A list of the upcoming semesters
    */
-  public static function get_upcoming_semesters($limit = 12)
+  public static function get_upcoming_semesters($limit = 32)
   {
     // Load terms from the 'semesters' vocabulary
     $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
