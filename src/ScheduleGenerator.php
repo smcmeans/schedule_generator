@@ -483,6 +483,13 @@ class ScheduleGenerator
   }
 
   /**
+   * Returns the id of the desired graduation semester of the passed node
+   */
+  private static function get_desired_graduation_semester(NodeInterface $student_node) {
+    return $student_node->get('field_graduation_semester')->id();
+  }
+
+  /**
    * Saves the array to the passed node
    * 
    * @param NodeInterface $student_node
@@ -558,9 +565,5 @@ class ScheduleGenerator
     $student_node->save();
 
     return $return_value;
-  }
-
-  private static function get_desired_graduation_semester(NodeInterface $student_node) {
-    return $student_node->get('field_graduation_semester')->id();
   }
 }
