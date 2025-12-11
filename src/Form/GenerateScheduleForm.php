@@ -65,7 +65,7 @@ class GenerateScheduleForm extends FormBase
         if ($graduation_passed) {
           $this->messenger()->addStatus($this->t('Schedule generated successfully!'));
         } else {
-          $this->messenger()->addError($this->t('Generated Schedule goes past desired graduation date!'));
+          $this->messenger()->addError($this->t('Generated schedule goes past desired graduation date!'));
         }
       } else {
         $this->messenger()->addError($this->t('Could not find a student profile for the current user.'));
