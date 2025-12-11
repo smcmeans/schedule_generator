@@ -491,7 +491,7 @@ class ScheduleGenerator
    * The 2D array containing the schedule
    * 
    * @return bool
-   * If the save was successful
+   * If we passed the desired graduation semested
    */
   public static function save_schedule_to_node(NodeInterface $student_node, array $schedule)
   {
@@ -501,6 +501,11 @@ class ScheduleGenerator
 
     // Clear the existing Academic Plan to avoid duplicates
     $student_node->set('field_academic_plan', []);
+
+    // Variables to check if we passed the desired graduation date
+    $desired_graduation_semester = self::get_desired_graduation_semester($student_node);
+    $passed = false;
+    $return_value = true;
 
     // Loop through the Generated Schedule
     // $classes is the array of course data
@@ -537,11 +542,25 @@ class ScheduleGenerator
 
       // Attach Paragraph to Student Node
       $student_node->get('field_academic_plan')->appendItem($paragraph);
+
+      // Check if passed
+      if ($passed) {
+        $return_value = false;
+      }
+      
+      // Check if current semester is desired semester
+      if ($semester_term_id == $desired_graduation_semester) {
+        $passed = true;
+      }
     }
 
     // Save the Student Node
     $student_node->save();
 
-    return true;
+    return $return_value;
+  }
+
+  private static function get_desired_graduation_semester(NodeInterface $student_node) {
+    return $student_node->get('field_graduation_semester')->id();
   }
 }
