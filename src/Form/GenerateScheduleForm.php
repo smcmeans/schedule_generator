@@ -60,9 +60,13 @@ class GenerateScheduleForm extends FormBase
 
         $sorted = ScheduleGenerator::sort_classes_by_prerequisite($all_classes, ScheduleGenerator::get_desired_credit_hours($student), $coop);
 
-        ScheduleGenerator::save_schedule_to_node($student, $sorted);
+        $graduation_passed = ScheduleGenerator::save_schedule_to_node($student, $sorted);
 
-        $this->messenger()->addStatus($this->t('Schedule generated successfully!'));
+        if ($graduation_passed) {
+          $this->messenger()->addError($this->t('Generated Schedule goes past desired graduation date'));
+        } else {
+          $this->messenger()->addStatus($this->t('Schedule generated successfully!'));
+        }
       } else {
         $this->messenger()->addError($this->t('Could not find a student profile for the current user.'));
       }
