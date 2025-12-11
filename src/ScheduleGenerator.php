@@ -19,14 +19,30 @@ class ScheduleGenerator
     $this->studentProfileManager = $studentProfileManager;
   }
 
-  // Untested
+  /**
+   * Gets the desired credit hours from a student profile
+   * 
+   * @param NodeInterface $studentProfile
+   * The student profile to search
+   * 
+   * @return int
+   * The desired credit hours or 12 if not found
+   */
   public static function get_desired_credit_hours(NodeInterface $studentProfile)
   {
     $credit_hours = $studentProfile->get('field_desired_credit_hours')->value;
     return is_numeric($credit_hours) ? (int) $credit_hours : 12; // Default to 12 if not set
   }
 
-  // Tested works
+  /**
+   * Gets all of the classes from the student profile
+   * 
+   * @param NodeInterface $studentProfile
+   * The node that will be searched
+   * 
+   * @return array
+   * Array containing the required classes and all of the classes in the program
+   */
   public static function get_all_classes(NodeInterface $studentProfile)
   {
     $return_array = [];
@@ -106,7 +122,15 @@ class ScheduleGenerator
     return array_values($return_array);
   }
 
-  // Untested
+  /**
+   * Sorts the passed array by the ['number'] field
+   * 
+   * @param array $classes
+   * The array to sort
+   * 
+   * @return array
+   * Sorted list
+   */
   public static function sort_courses_by_number(array $classes)
   {
     usort($classes, function ($a, $b) {
@@ -115,7 +139,20 @@ class ScheduleGenerator
     return $classes;
   }
 
-  // Tested works
+  /**
+   * Sorts the array by prerequisite chain, also splits the array into semesters
+   * Adds a coop semester if coop is true
+   * 
+   * @param array $all_classes
+   * Array from get_all_classes function
+   * @param int $desired_credits
+   * The amount of credits that the function will try to generate each semester
+   * @param bool $coop
+   * If the student wants a coop
+   * 
+   * @return array
+   * 2D array with the first array holding the semester number and the second being the classes for each semester
+   */
   public static function sort_classes_by_prerequisite(array $all_classes, int $desired_credits, bool $coop)
   {
 
@@ -260,6 +297,15 @@ class ScheduleGenerator
     return array_values($classes_taken);
   }
 
+  /**
+   * Gets all of the class numbers from a 2D array
+   * 
+   * @param array $schedules
+   * The array that is being searched
+   * 
+   * @return array
+   * Array containing all of the course numbers
+   */
   private static function get_all_classes_number(array $schedules)
   {
     $all_courses_number = [];
@@ -275,6 +321,15 @@ class ScheduleGenerator
     return $all_courses_number;
   }
 
+  /**
+   * Gets the total credits of an array with the ['credits'] column
+   * 
+   * @param array $courses
+   * The array that will be totaled
+   * 
+   * @return int
+   * The total credits from $courses
+   */
   private static function get_total_credits(array $courses)
   {
     $total = 0;
@@ -293,6 +348,7 @@ class ScheduleGenerator
    * The raw string (e.g., "(CS 1010 ... and CS 1020 ...)")
    * @param array $taken_classes 
    * An array of strings of classes taken (e.g., ['CS 1010', 'ENG 1100'])
+   * 
    * @return bool
    * True if requirements are met, False otherwise.
    */
@@ -364,6 +420,7 @@ class ScheduleGenerator
     }
   }
 
+  // Unused
   private static function clear_buffer(array $buffer, array $classes_taken, int $current_semester, int $desired_credits)
   {
     if ($desired_credits - self::get_total_credits($buffer) <= 1) {
@@ -377,6 +434,12 @@ class ScheduleGenerator
     return $current_semester;
   }
 
+  /**
+   * Adds an empty coop semester to the end of passed array
+   * 
+   * @param array &$courses
+   * The array that the coop will be added to
+   */
   private static function add_coop(array &$courses)
   {
     $coop_id = 399;
@@ -396,8 +459,13 @@ class ScheduleGenerator
   }
 
   /**
-   * Helper: Get upcoming semester taxonomy terms.
-   * Assumes terms are named like "Fall 2025", "Spring 2026".
+   * Get upcoming semester taxonomy terms.
+   * 
+   * @param int $limit
+   * The amount of semesters to get, max is 12
+   * 
+   * @return array
+   * A list of the upcoming semesters
    */
   public static function get_upcoming_semesters($limit = 12)
   {
@@ -414,6 +482,17 @@ class ScheduleGenerator
     return array_values($terms);
   }
 
+  /**
+   * Saves the array to the passed node
+   * 
+   * @param NodeInterface $student_node
+   * The node that the array will be saved to
+   * @param array $schedule
+   * The 2D array containing the schedule
+   * 
+   * @return bool
+   * If the save was successful
+   */
   public static function save_schedule_to_node(NodeInterface $student_node, array $schedule)
   {
 

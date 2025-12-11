@@ -10,11 +10,22 @@ use Drupal\schedule_generator\ScheduleGenerator;
 class GenerateScheduleForm extends FormBase
 {
 
+  /**
+   * Returns the id of the form
+   */
   public function getFormId()
   {
     return 'schedule_generator_generate_form';
   }
 
+  /**
+   * Builds a button that says Generate Schedule
+   * 
+   * @param array $form
+   * The button form
+   * @param FormStateInterface $form_state
+   * The form state
+   */
   public function buildForm(array $form, FormStateInterface $form_state)
   {
     $form['actions']['#type'] = 'actions';
@@ -27,6 +38,14 @@ class GenerateScheduleForm extends FormBase
     return $form;
   }
 
+  /**
+   * Calls the functions to generate and save the schedule
+   * 
+   * @param array &$form
+   * The form to submit
+   * @param FormStateInterface $form_state
+   * The form state used to refresh the page
+   */
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
     try {
