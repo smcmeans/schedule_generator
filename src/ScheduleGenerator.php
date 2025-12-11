@@ -153,148 +153,138 @@ class ScheduleGenerator
    * @return array
    * 2D array with the first array holding the semester number and the second being the classes for each semester
    */
-  public static function sort_classes_by_prerequisite(array $all_classes, int $desired_credits, bool $coop)
-  {
-
-    // Selected classes
-    $classes = $all_classes[0];
-
-    // All classes in major, useful for searching for prerequisites
-    $program_classes = $all_classes[1];
-
-    // These are the classes that have been sorted already
+  public static function sort_classes_by_prerequisite(array $all_classes, int $desired_credits, bool $coop) {
+    // Setup
+    $classes = self::sort_courses_by_number($all_classes[0]);
     $classes_taken = [];
     $current_semester = 0;
-
-    // Buffer to hold classes for current semester
     $buffer = [];
 
-    // Sort classes to better match levels (1000s, 2000s, etc.)
-    $classes = self::sort_courses_by_number($classes);
+    // Process classes with no prerequisites immediately
+    self::process_no_prereq_classes($classes, $buffer, $classes_taken, $current_semester, $desired_credits, $coop);
 
-    foreach ($classes as $id => $course) {
-      if ($course['prerequisite'] == 'N/A') {
-        // No prereqs, can be added to buffer
-        $buffer[] = $course;
-        if (!empty($course['linked_sections'])) {
-          foreach ($course['linked_sections'] as $linked_course) {
-            $buffer[] = $linked_course;
-          }
-        }
-        // Remove from class list
-        unset($classes[$id]);
-        if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-          foreach ($buffer as $c) {
-            $classes_taken[$current_semester][] = $c;
-          }
-          $current_semester++;
-          // Clear buffer for next semester
-          $buffer = [];
-          if ($coop && $current_semester == 5) {
-            self::add_coop($classes_taken);
-            $current_semester++;
-          }
-        }
-      }
-    }
-    // Check if buffer has been cleared yet
-    if ($current_semester == 0 && !empty($buffer)) {
-      foreach ($buffer as $c) {
-        $classes_taken[$current_semester][] = $c;
-      }
-      $current_semester++;
-      // Clear buffer for next semester
-      $buffer = [];
-    }
+    // Loop through remaining classes and resolve prerequisites
+    self::process_complex_classes($classes, $buffer, $classes_taken, $current_semester, $desired_credits, $coop);
 
-    // At this point, we have added all classes without prerequisites
-    // Now we loop until all classes are sorted
-    $made_changes = true;
-    while (!empty($classes)) {
-      while ($made_changes) {
-        // Reset change flag
-        $made_changes = false;
-        foreach ($classes as $id => $course) {
-          if (self::get_total_credits($buffer) + $course['credits'] > $desired_credits) {
-            // Not enough room in this semester, move to next course
-          }
-          // Check if prerequisites are met
-          elseif (self::check_prerequisites($course['prerequisite'], self::get_all_classes_number($classes_taken))) {
-            // Prerequisites met, can take this class now
-            $buffer[] = $course;
-            // Remove from original list
-            unset($classes[$id]);
-            // Mark that we made changes this pass
-            $made_changes = true;
-            // Add linked courses if they exist
-            if (!empty($course['linked_sections'])) {
-              foreach ($course['linked_sections'] as $linked_course) {
-                $buffer[] = $linked_course;
-              }
-            }
-            // If we have reached desired credits (mostly), finalize this semester
-            if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-              // Add buffer to classes taken
-              foreach ($buffer as $c) {
-                $classes_taken[$current_semester][] = $c;
-              }
-              $current_semester++;
-              // Clear buffer for next semester
-              $buffer = [];
-              // Check if they want a co-op
-              if ($coop && $current_semester == 5) {
-                self::add_coop($classes_taken);
-                $current_semester++;
-              }
-            }
-          }
-        }
-      }
-      // If we exit the inner loop without changes, finalize any remaining buffer
-      if (!empty($buffer)) {
-        // Add buffer to classes taken
-        foreach ($buffer as $c) {
-          $classes_taken[$current_semester][] = $c;
-        }
-        $current_semester++;
-        // Clear buffer for next semester
-        $buffer = [];
-        // Set made changes back to true
-        $made_changes = true;
-        // Check if they want a co-op
-        if ($coop && $current_semester == 5) {
-          self::add_coop($classes_taken);
-          $current_semester++;
-        }
-        echo "Cleared buffer";
-      } else {
-        // Impossible prerequisites, search program_classes for them
-        break;
-      }
-    }
-
-    // If the loop finished but there are still classes left, it means there are impossible prerequisites
+    // Force add any unresolvable classes (Error fallback)
     if (!empty($classes)) {
-      // Just append them at the end for now
-      foreach ($classes as $course) {
-        $buffer[] = $course;
-        error_log('Unresolvable Prerequisite for Course: ' . $course['number'] . ' | Prerequisite: ' . $course['prerequisite']);
-        if ($desired_credits - self::get_total_credits($buffer) <= 1) {
-          foreach ($buffer as $c) {
-            $classes_taken[$current_semester][] = $c;
-          }
-          $current_semester++;
-          // Clear buffer for next semester
-          $buffer = [];
-          if ($coop && $current_semester == 5) {
-            self::add_coop($classes_taken);
-            $current_semester++;
-          }
-        }
-      }
+      self::force_add_remaining_classes($classes, $buffer, $classes_taken, $current_semester, $desired_credits, $coop);
     }
 
     return array_values($classes_taken);
+  }
+
+  /**
+   * Handle classes with 'N/A' prerequisites.
+   */
+  private static function process_no_prereq_classes(array &$classes, array &$buffer, array &$classes_taken, int &$current_semester, int $desired_credits, bool $coop) {
+    foreach ($classes as $id => $course) {
+      if ($course['prerequisite'] == 'N/A') {
+        self::add_course_to_buffer($course, $buffer);
+        unset($classes[$id]);
+
+        // Check if we need to close the semester
+        self::attempt_semester_close($buffer, $classes_taken, $current_semester, $desired_credits, $coop);
+      }
+    }
+    
+    // If buffer isn't empty after Phase 1 but no semester closed, force close it to start fresh for Phase 2
+    // (This matches your original logic: "Check if buffer has been cleared yet")
+    if ($current_semester == 0 && !empty($buffer)) {
+        self::close_semester($buffer, $classes_taken, $current_semester, $coop);
+    }
+  }
+
+  /**
+   * Contentiously tries to fit classes where prereqs are met.
+   */
+  private static function process_complex_classes(array &$classes, array &$buffer, array &$classes_taken, int &$current_semester, int $desired_credits, bool $coop) {
+    $made_changes = true;
+
+    while (!empty($classes)) {
+      // Inner loop: Keep trying as long as we make progress
+      while ($made_changes) {
+        $made_changes = false;
+
+        foreach ($classes as $id => $course) {
+          // Check Credit Limit
+          if (self::get_total_credits($buffer) + $course['credits'] > $desired_credits) {
+            continue; 
+          }
+
+          // Check Prerequisites
+          $all_taken_codes = self::get_all_classes_number($classes_taken);
+          if (self::check_prerequisites($course['prerequisite'], $all_taken_codes)) {
+            
+            self::add_course_to_buffer($course, $buffer);
+            unset($classes[$id]);
+            $made_changes = true;
+
+            // Check if we need to close the semester
+            self::attempt_semester_close($buffer, $classes_taken, $current_semester, $desired_credits, $coop);
+          }
+        }
+      }
+
+      // If loop finished with no changes, but buffer has items, close the semester to free up slots
+      if (!empty($buffer)) {
+        self::close_semester($buffer, $classes_taken, $current_semester, $coop);
+        $made_changes = true; // Force another pass since a new semester started
+      } else {
+        // Impossible prerequisites found (deadlock)
+        break;
+      }
+    }
+  }
+
+  /**
+   * Fallback for unresolvable prerequisites.
+   */
+  private static function force_add_remaining_classes(array $classes, array &$buffer, array &$classes_taken, int &$current_semester, int $desired_credits, bool $coop) {
+    foreach ($classes as $course) {
+      error_log('Unresolvable Prerequisite: ' . $course['number']);
+      self::add_course_to_buffer($course, $buffer);
+      self::attempt_semester_close($buffer, $classes_taken, $current_semester, $desired_credits, $coop);
+    }
+  }
+
+  /**
+   * Helper: Adds a course and its linked sections to the buffer.
+   */
+  private static function add_course_to_buffer(array $course, array &$buffer) {
+    $buffer[] = $course;
+    if (!empty($course['linked_sections'])) {
+      foreach ($course['linked_sections'] as $linked_course) {
+        $buffer[] = $linked_course;
+      }
+    }
+  }
+
+  /**
+   * Helper: Checks if credits are full. If so, closes the semester.
+   */
+  private static function attempt_semester_close(array &$buffer, array &$classes_taken, int &$current_semester, int $desired_credits, bool $coop) {
+    if ($desired_credits - self::get_total_credits($buffer) <= 1) {
+      self::close_semester($buffer, $classes_taken, $current_semester, $coop);
+    }
+  }
+
+  /**
+   * Helper: Moves buffer to taken, increments semester, handles Co-op.
+   */
+  private static function close_semester(array &$buffer, array &$classes_taken, int &$current_semester, bool $coop) {
+    foreach ($buffer as $c) {
+      $classes_taken[$current_semester][] = $c;
+    }
+    
+    $current_semester++;
+    $buffer = []; // Clear buffer
+
+    // Handle Co-op logic
+    if ($coop && $current_semester == 5) {
+      self::add_coop($classes_taken);
+      $current_semester++;
+    }
   }
 
   /**
