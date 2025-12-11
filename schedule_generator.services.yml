@@ -1,4 +1,8 @@
 services:
+  schedule_generator.student_manager:
+    class: Drupal\schedule_generator\Service\StudentProfileManager
+    arguments: ['@current_user', '@entity_type.manager']
+
   schedule_generator.generator:
-    class: Drupal\schedule_generator\ScheduleGeneratorService
-    arguments: ['@entity_type.manager']
+    class: Drupal\schedule_generator\ScheduleGenerator
+    arguments: ['@entity_type.manager', '@schedule_generator.student_manager']
